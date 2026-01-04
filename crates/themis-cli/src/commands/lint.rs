@@ -1,7 +1,7 @@
 //! Lint command implementation.
 
-use std::path::PathBuf;
 use clap::Args;
+use std::path::PathBuf;
 
 /// Arguments for the lint command.
 #[derive(Args)]
@@ -20,7 +20,7 @@ pub struct LintArgs {
 }
 
 /// Runs the lint command.
-pub fn run(args: LintArgs) -> anyhow::Result<()> {
+pub fn run(args: &LintArgs) -> anyhow::Result<()> {
     println!("Linting contract: {}", args.contract.display());
 
     // TODO: Implement linting in Week 5

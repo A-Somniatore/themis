@@ -1,7 +1,7 @@
 //! Diff command implementation.
 
-use std::path::PathBuf;
 use clap::Args;
+use std::path::PathBuf;
 
 /// Arguments for the diff command.
 #[derive(Args)]
@@ -24,7 +24,7 @@ pub struct DiffArgs {
 }
 
 /// Runs the diff command.
-pub fn run(args: DiffArgs) -> anyhow::Result<()> {
+pub fn run(args: &DiffArgs) -> anyhow::Result<()> {
     println!("Comparing contracts:");
     println!("  Old: {}", args.old.display());
     println!("  New: {}", args.new.display());

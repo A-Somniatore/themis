@@ -1,6 +1,6 @@
 //! Semantic versioning support for contracts.
 //!
-//! Implements semantic versioning (SemVer) for contract version management.
+//! Implements semantic versioning (`SemVer`) for contract version management.
 
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
@@ -92,31 +92,31 @@ impl Version {
     ///
     /// A version is a breaking change if the major version is different.
     #[must_use]
-    pub fn is_breaking_from(&self, other: &Self) -> bool {
+    pub const fn is_breaking_from(&self, other: &Self) -> bool {
         self.major != other.major
     }
 
     /// Returns true if this is a pre-release version.
     #[must_use]
-    pub fn is_pre_release(&self) -> bool {
+    pub const fn is_pre_release(&self) -> bool {
         self.pre_release.is_some()
     }
 
     /// Returns the next major version (resets minor and patch to 0).
     #[must_use]
-    pub fn next_major(&self) -> Self {
+    pub const fn next_major(&self) -> Self {
         Self::new(self.major + 1, 0, 0)
     }
 
     /// Returns the next minor version (resets patch to 0).
     #[must_use]
-    pub fn next_minor(&self) -> Self {
+    pub const fn next_minor(&self) -> Self {
         Self::new(self.major, self.minor + 1, 0)
     }
 
     /// Returns the next patch version.
     #[must_use]
-    pub fn next_patch(&self) -> Self {
+    pub const fn next_patch(&self) -> Self {
         Self::new(self.major, self.minor, self.patch + 1)
     }
 }

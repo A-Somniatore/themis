@@ -130,11 +130,13 @@ impl Operation {
         }
         matches!(
             self.method,
-            Some(HttpMethod::Get)
-                | Some(HttpMethod::Put)
-                | Some(HttpMethod::Delete)
-                | Some(HttpMethod::Head)
-                | Some(HttpMethod::Options)
+            Some(
+                HttpMethod::Get
+                    | HttpMethod::Put
+                    | HttpMethod::Delete
+                    | HttpMethod::Head
+                    | HttpMethod::Options
+            )
         )
     }
 }
@@ -253,7 +255,7 @@ pub struct SecurityRequirement {
     /// Security scheme name
     pub scheme: String,
 
-    /// Required scopes (for OAuth2)
+    /// Required scopes (for `OAuth2`)
     #[serde(default)]
     pub scopes: Vec<String>,
 }

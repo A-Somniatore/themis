@@ -50,8 +50,8 @@ fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Validate(args) => commands::validate::run(args),
-        Commands::Lint(args) => commands::lint::run(args),
-        Commands::Diff(args) => commands::diff::run(args),
+        Commands::Validate(args) => commands::validate::run(&args),
+        Commands::Lint(args) => commands::lint::run(&args),
+        Commands::Diff(args) => commands::diff::run(&args),
     }
 }

@@ -1,8 +1,28 @@
 # Themis – Development Roadmap
 
-> **Version**: 1.0.0  
+> **Version**: 1.1.0  
 > **Created**: 2026-01-04  
+> **Last Updated**: 2026-01-04  
 > **Target Completion**: Week 14 (MVP)
+
+---
+
+## Key Decisions
+
+| Decision                                                                     | Impact                                 |
+| ---------------------------------------------------------------------------- | -------------------------------------- |
+| [ADR-006](../../docs/decisions/006-grpc-post-mvp.md)                         | MVP is OpenAPI 3.x only, gRPC post-MVP |
+| [ADR-005](../../docs/decisions/005-kubernetes-ingress-over-custom-router.md) | No custom router, use K8s Ingress      |
+| [ADR-007](../../docs/decisions/007-apache-2-license.md)                      | Apache 2.0 license                     |
+
+**MVP Contract Support:**
+
+- ✅ OpenAPI 3.0 / 3.1 (REST APIs)
+- ❌ Protobuf/gRPC (post-MVP)
+- ❌ GraphQL (post-MVP)
+- ❌ AsyncAPI (post-MVP)
+
+**Contract Registry:** OCI-compatible registry (see [Infrastructure Decisions](../../docs/architecture/infrastructure-decisions.md))
 
 ---
 
@@ -33,6 +53,7 @@ Themis is the contract governance toolchain for the Themis Platform. Development
 ```
 
 **Key Coordination Points**:
+
 - Week 1: Themis creates `themis-platform-types` crate (all components depend on this)
 - Week 12: Themis artifacts available for Archimedes integration (T4 complete)
 - Week 14: Themis MVP complete, supporting Archimedes A5 integration
@@ -57,7 +78,7 @@ Themis is the contract governance toolchain for the Themis Platform. Development
   - [x] `RequestId` type (UUID v7)
   - [x] `SemanticVersion` type
   - [x] Standard error codes enum
-  > ✅ **Completed 2026-01-04**: All core types implemented in `src/identity.rs`, `src/policy.rs`, `src/error.rs`, `src/request.rs`, `src/version.rs`. ErrorCode enum in error.rs.
+    > ✅ **Completed 2026-01-04**: All core types implemented in `src/identity.rs`, `src/policy.rs`, `src/error.rs`, `src/request.rs`, `src/version.rs`. ErrorCode enum in error.rs.
 - [x] Add comprehensive documentation
   > ✅ **Completed 2026-01-04**: Rustdoc with examples in lib.rs and README.md
 - [ ] Publish to crates.io (or private registry)
@@ -120,12 +141,20 @@ themis-platform/
 
 ### Week 3: OpenAPI Parser
 
-- [ ] Implement OpenAPI 3.1 parser
-- [ ] Handle `$ref` resolution (internal refs)
-- [ ] Extract operations with operationId
-- [ ] Extract request/response schemas
-- [ ] Parse security schemes
-- [ ] Test with sample OpenAPI specs
+- [x] Implement OpenAPI 3.1 parser
+  > **Completed 2026-01-04**: Full parser in themis-openapi using openapiv3 crate. Parses YAML/JSON, converts to themis-core Contract type.
+- [x] Handle `$ref` resolution (internal refs)
+  > **Completed 2026-01-04**: RefSchema support for $ref pointers, preserves reference strings for later resolution
+- [x] Extract operations with operationId
+  > **Completed 2026-01-04**: Extracts all operations from paths, requires operationId (returns error if missing)
+- [x] Extract request/response schemas
+  > **Completed 2026-01-04**: Full schema conversion including string, number, integer, boolean, array, object, enum, oneOf, allOf, anyOf
+- [x] Parse security schemes
+  > **Completed 2026-01-04**: Supports HTTP, ApiKey, OAuth2, OpenIdConnect security scheme types
+- [x] Test with sample OpenAPI specs
+  > **Completed 2026-01-04**: 8 unit tests covering parsing, schema conversion, security schemes, extensions
+- [x] Support Themis extensions (x-themis-*)
+  > **Completed 2026-01-04**: Extracts x-themis-rate-limit-tier, x-themis-timeout-tier, x-themis-idempotent
 
 ### Week 4: Contract Validation
 

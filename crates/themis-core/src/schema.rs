@@ -1,7 +1,7 @@
 //! Schema types for contract data models.
 //!
 //! Provides a unified schema representation that can express types from
-//! OpenAPI, Protobuf, GraphQL, and AsyncAPI.
+//! `OpenAPI`, Protobuf, GraphQL, and `AsyncAPI`.
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -89,7 +89,7 @@ pub struct StringSchema {
 }
 
 /// Integer schema with optional constraints.
-#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct IntegerSchema {
     /// Human-readable description
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -260,7 +260,7 @@ pub struct AnyOfSchema {
 }
 
 /// Enumeration schema.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct EnumSchema {
     /// Human-readable description
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -275,7 +275,7 @@ pub struct EnumSchema {
 }
 
 /// A single enum value.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct EnumValue {
     /// The enum value
     pub value: serde_json::Value,
@@ -323,7 +323,7 @@ impl Schema {
 
     /// Creates an array schema with the given item schema.
     #[must_use]
-    pub fn array(items: Schema) -> Self {
+    pub fn array(items: Self) -> Self {
         Self::Array(ArraySchema {
             items: Box::new(items),
             ..Default::default()
@@ -346,7 +346,7 @@ impl Schema {
 
     /// Returns true if this schema is nullable.
     #[must_use]
-    pub fn is_nullable(&self) -> bool {
+    pub const fn is_nullable(&self) -> bool {
         match self {
             Self::String(s) => s.nullable,
             Self::Integer(i) => i.nullable,

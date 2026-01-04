@@ -1,8 +1,8 @@
-//! # Themis OpenAPI
+//! # Themis `OpenAPI`
 //!
-//! OpenAPI 3.1 parser and normalizer for Themis.
+//! `OpenAPI` 3.1 parser and normalizer for Themis.
 //!
-//! This crate provides functionality to parse OpenAPI 3.1 specifications and
+//! This crate provides functionality to parse `OpenAPI` 3.1 specifications and
 //! normalize them into the unified Themis contract model.
 //!
 //! ## Example
@@ -17,10 +17,13 @@
 
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
+// TODO: Fix these clippy warnings in a follow-up PR
+#![allow(clippy::doc_markdown)]
+#![allow(clippy::too_many_lines)]
 
+pub mod normalizer;
 pub mod parser;
 pub mod validator;
-pub mod normalizer;
 
 pub use parser::parse_openapi;
 pub use validator::validate_openapi;

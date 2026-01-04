@@ -47,6 +47,10 @@ pub struct ValidationIssue {
 /// # Returns
 ///
 /// A [`ValidationResult`] containing any errors or warnings.
+///
+/// # Errors
+///
+/// Returns an error if the OpenAPI content cannot be parsed.
 pub fn validate_openapi(content: &str) -> ThemisResult<ValidationResult> {
     // TODO: Implement validation in Week 4
     let _ = content;
@@ -62,6 +66,7 @@ pub fn validate_openapi(content: &str) -> ThemisResult<ValidationResult> {
 /// # Returns
 ///
 /// A [`ValidationResult`] containing any errors or warnings.
+#[must_use]
 pub fn validate_contract(contract: &Contract) -> ValidationResult {
     // TODO: Implement contract validation in Week 4
     let _ = contract;

@@ -1,7 +1,7 @@
 //! Contract model representing a unified API contract.
 //!
 //! The [`Contract`] struct is the central data structure in Themis, representing
-//! any API contract regardless of its source format (OpenAPI, Protobuf, GraphQL, etc.).
+//! any API contract regardless of its source format (`OpenAPI`, Protobuf, GraphQL, etc.).
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -14,13 +14,13 @@ use crate::version::Version;
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum ContractFormat {
-    /// OpenAPI 3.1 specification
+    /// `OpenAPI` 3.1 specification
     OpenApi,
     /// Protocol Buffers v3
     Protobuf,
     /// GraphQL Schema Definition Language
     GraphQl,
-    /// AsyncAPI 3.0 specification
+    /// `AsyncAPI` 3.0 specification
     AsyncApi,
 }
 
@@ -49,8 +49,8 @@ pub struct ContractMetadata {
 
 /// A unified API contract representation.
 ///
-/// This struct normalizes contracts from different source formats (OpenAPI, Protobuf,
-/// GraphQL, AsyncAPI) into a common model that can be validated, compared, and used
+/// This struct normalizes contracts from different source formats (`OpenAPI`, Protobuf,
+/// GraphQL, `AsyncAPI`) into a common model that can be validated, compared, and used
 /// for code generation.
 ///
 /// # Example
@@ -167,11 +167,11 @@ pub enum SecuritySchemeType {
         /// Name of the header, query param, or cookie
         name: String,
     },
-    /// OAuth2 authentication
+    /// `OAuth2` authentication
     OAuth2,
-    /// OpenID Connect authentication
+    /// `OpenID` Connect authentication
     OpenIdConnect {
-        /// OpenID Connect discovery URL
+        /// `OpenID` Connect discovery URL
         openid_connect_url: String,
     },
     /// Mutual TLS (mTLS) authentication

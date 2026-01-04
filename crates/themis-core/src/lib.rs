@@ -19,7 +19,7 @@
 //! - [`ThemisErrorEnvelope`] - Standard API error format
 //! - [`ErrorCode`] - Standard error codes
 //! - [`RequestId`] - UUID v7 request identifier
-//! - [`SemanticVersion`] - SemVer 2.0 version type
+//! - [`SemanticVersion`] - `SemVer` 2.0 version type
 //!
 //! ## Example
 //!

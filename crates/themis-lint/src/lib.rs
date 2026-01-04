@@ -8,7 +8,7 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
-pub mod rules;
 pub mod reporter;
+pub mod rules;
 
 pub use reporter::{LintReport, LintReporter};

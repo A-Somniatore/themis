@@ -19,13 +19,19 @@ impl LintReport {
     /// Returns the number of errors.
     #[must_use]
     pub fn error_count(&self) -> usize {
-        self.issues.iter().filter(|i| i.severity == Severity::Error).count()
+        self.issues
+            .iter()
+            .filter(|i| i.severity == Severity::Error)
+            .count()
     }
 
     /// Returns the number of warnings.
     #[must_use]
     pub fn warning_count(&self) -> usize {
-        self.issues.iter().filter(|i| i.severity == Severity::Warning).count()
+        self.issues
+            .iter()
+            .filter(|i| i.severity == Severity::Warning)
+            .count()
     }
 }
 
@@ -61,11 +67,12 @@ pub struct LintReporter {
 impl LintReporter {
     /// Creates a new lint reporter.
     #[must_use]
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {}
     }
 
     /// Runs all lint rules against a contract.
+    #[must_use]
     pub fn lint(&self, contract: &Contract) -> LintReport {
         // TODO: Implement linting in Week 5
         let _ = contract;

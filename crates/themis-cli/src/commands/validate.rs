@@ -1,7 +1,7 @@
 //! Validate command implementation.
 
-use std::path::PathBuf;
 use clap::Args;
+use std::path::PathBuf;
 
 /// Arguments for the validate command.
 #[derive(Args)]
@@ -16,7 +16,7 @@ pub struct ValidateArgs {
 }
 
 /// Runs the validate command.
-pub fn run(args: ValidateArgs) -> anyhow::Result<()> {
+pub fn run(args: &ValidateArgs) -> anyhow::Result<()> {
     println!("Validating contract: {}", args.contract.display());
 
     // TODO: Implement validation in Week 4

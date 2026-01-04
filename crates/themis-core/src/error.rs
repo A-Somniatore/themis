@@ -162,7 +162,7 @@ impl ThemisError {
     ///
     /// These codes can be used for programmatic error handling.
     #[must_use]
-    pub fn code(&self) -> &'static str {
+    pub const fn code(&self) -> &'static str {
         match self {
             Self::FileRead { .. } => "FILE_READ_ERROR",
             Self::FileWrite { .. } => "FILE_WRITE_ERROR",
@@ -183,7 +183,7 @@ impl ThemisError {
 
     /// Returns true if this error is recoverable.
     #[must_use]
-    pub fn is_recoverable(&self) -> bool {
+    pub const fn is_recoverable(&self) -> bool {
         matches!(
             self,
             Self::LintViolation { .. } | Self::BreakingChange { .. }
