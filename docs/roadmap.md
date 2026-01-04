@@ -113,10 +113,10 @@ themis-platform/
   > **Completed 2026-01-04**: Implemented Contract, Operation, Schema, Version, and Error types in themis-core with full test coverage
 - [x] Write initial documentation
   > **Completed 2026-01-04**: Created development.md guide, updated README with Quick Start, added users-service example contract
-- [ ] Integrate `themis-platform-types` dependency
-  > ⏳ **Ready**: Shared crate available, migration pending
-- [ ] Refactor error types to use `ThemisErrorEnvelope` from shared crate
-  > ⏳ **Ready**: Shared crate available, migration pending
+- [x] Integrate `themis-platform-types` dependency
+  > ✅ **Completed 2026-01-04**: Added as workspace dependency, re-exported shared types in themis-core
+- [x] Refactor error types to use `ThemisErrorEnvelope` from shared crate
+  > ✅ **Completed 2026-01-04**: Re-export ErrorCode, FieldError, ThemisErrorEnvelope from themis-platform-types
 
 ### Week 3: OpenAPI Parser
 
