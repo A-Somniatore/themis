@@ -11,6 +11,16 @@
 //! - [`Version`] - Semantic versioning support
 //! - [`error`] - Standardized error types
 //!
+//! ## Shared Platform Types
+//!
+//! This crate re-exports types from `themis-platform-types` that are shared
+//! across Themis, Archimedes, and Eunomia:
+//!
+//! - [`ThemisErrorEnvelope`] - Standard API error format
+//! - [`ErrorCode`] - Standard error codes
+//! - [`RequestId`] - UUID v7 request identifier
+//! - [`SemanticVersion`] - SemVer 2.0 version type
+//!
 //! ## Example
 //!
 //! ```rust
@@ -35,3 +45,8 @@ pub use error::{ThemisError, ThemisResult};
 pub use operation::Operation;
 pub use schema::Schema;
 pub use version::Version;
+
+// Re-export shared platform types for convenience
+pub use themis_platform_types::{
+    ErrorCode, FieldError, RequestId, SemanticVersion, ThemisErrorEnvelope,
+};

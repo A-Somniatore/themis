@@ -2354,18 +2354,18 @@ async fn get_user_matches_contract() {
 - ✅ **Primary format**: OpenAPI 3.1 for HTTP, Protobuf v3 for gRPC
 - ✅ **Versioning scheme**: Directory-based major versions, semver for minors
 - ✅ **Breaking change policy**: Block in CI, require major version bump
+- ✅ **Contract ownership**: Team-based ownership via CODEOWNERS
+- ✅ **Generated SDK distribution**: Inline generation for MVP, package publishing in V1.1
 
 ### Under Discussion
 
-- 🟡 **Contract inheritance**: Allow services to extend base contracts?
-- 🟡 **Deprecation workflow**: How long is the sunset period?
-- 🟡 **Multi-service contracts**: One contract per service or allow sharing?
+- 🟡 **Contract inheritance**: Allow services to extend base contracts? (Defer to V1.1)
+- 🟡 **Deprecation workflow**: 90-day sunset period with warnings
+- 🟡 **Multi-service contracts**: One contract per service (shared schemas via $ref)
 
 ### To Be Decided
 
-- 🔴 **Private vs public contracts**: Different visibility rules?
-- 🔴 **Contract ownership**: Team-based or individual maintainers?
-- 🔴 **Generated SDK distribution**: Publish as packages or inline?
+- 🔴 **Private vs public contracts**: Different visibility rules? (Design needed)
 
 ---
 

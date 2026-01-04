@@ -12,16 +12,31 @@ Themis is the contract governance toolchain for the Themis Platform. Development
 
 ### Timeline Summary
 
-| Phase                       | Duration | Weeks | Description                              |
-| --------------------------- | -------- | ----- | ---------------------------------------- |
-| T0: Shared Types            | 1 week   | 1     | Create `themis-platform-types` crate     |
-| T1: Foundation              | 3 weeks  | 2-4   | Core types, OpenAPI parsing, validation  |
-| T2: Linting & Compatibility | 2 weeks  | 5-6   | Linting rules, breaking change detection |
-| T3: Code Generation         | 4 weeks  | 7-10  | Rust, TypeScript, Python code generation |
-| T4: Publishing & Registry   | 2 weeks  | 11-12 | Artifact publishing, registry client     |
+| Phase                       | Duration | Weeks | Description                                |
+| --------------------------- | -------- | ----- | ------------------------------------------ |
+| T0: Shared Types            | 1 week   | 1     | Create `themis-platform-types` crate       |
+| T1: Foundation              | 3 weeks  | 2-4   | Core types, OpenAPI parsing, validation    |
+| T2: Linting & Compatibility | 2 weeks  | 5-6   | Linting rules, breaking change detection   |
+| T3: Code Generation         | 4 weeks  | 7-10  | Rust, TypeScript, Python code generation   |
+| T4: Publishing & Registry   | 2 weeks  | 11-12 | Artifact publishing, registry client       |
 | T5: Integration Testing     | 2 weeks  | 13-14 | End-to-end testing with Archimedes/Eunomia |
 
 **Total**: 14 weeks
+
+### Cross-Component Timeline Alignment
+
+```
+         Week: 1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20
+ Themis:      [T0][---T1---][--T2--][------T3------][--T4--][--T5--]
+ Eunomia:     [E0][---E1---][------E2------][------E3------]        (gap)        [------E4------]
+ Archimedes:  [A0][---A1---][----------A2----------][----------A3----------][A4][------A5------]
+```
+
+**Key Coordination Points**:
+- Week 1: Themis creates `themis-platform-types` crate (all components depend on this)
+- Week 12: Themis artifacts available for Archimedes integration (T4 complete)
+- Week 14: Themis MVP complete, supporting Archimedes A5 integration
+- Weeks 17-20: Full platform integration (Themis team supports Archimedes/Eunomia)
 
 ---
 
@@ -32,19 +47,26 @@ Themis is the contract governance toolchain for the Themis Platform. Development
 
 ### Week 1: Create `themis-platform-types`
 
-- [ ] Create new repository `themis-platform-types` (or workspace member)
-- [ ] Move/define shared types:
-  - [ ] `CallerIdentity` enum (Spiffe, User, ApiKey, Anonymous)
-  - [ ] `PolicyInput` struct (caller, service, operation_id, method, path, headers, timestamp, environment, context)
-  - [ ] `PolicyDecision` struct (allowed, reason, policy_id, policy_version, evaluation_time_ns)
-  - [ ] `ThemisErrorEnvelope` struct (code, message, details, request_id, timestamp, trace_id)
-  - [ ] `RequestId` type (UUID v7)
-  - [ ] `SemanticVersion` type
-  - [ ] Standard error codes enum
-- [ ] Add comprehensive documentation
+- [x] Create new repository `themis-platform-types` (or workspace member)
+  > ✅ **Completed 2026-01-04**: Created `themis-platform-types` crate at platform root
+- [x] Move/define shared types:
+  - [x] `CallerIdentity` enum (Spiffe, User, ApiKey, Anonymous)
+  - [x] `PolicyInput` struct (caller, service, operation_id, method, path, headers, timestamp, environment, context)
+  - [x] `PolicyDecision` struct (allowed, reason, policy_id, policy_version, evaluation_time_ns)
+  - [x] `ThemisErrorEnvelope` struct (code, message, details, request_id, timestamp, trace_id)
+  - [x] `RequestId` type (UUID v7)
+  - [x] `SemanticVersion` type
+  - [x] Standard error codes enum
+  > ✅ **Completed 2026-01-04**: All core types implemented in `src/identity.rs`, `src/policy.rs`, `src/error.rs`, `src/request.rs`, `src/version.rs`. ErrorCode enum in error.rs.
+- [x] Add comprehensive documentation
+  > ✅ **Completed 2026-01-04**: Rustdoc with examples in lib.rs and README.md
 - [ ] Publish to crates.io (or private registry)
-- [ ] Create JSON Schema definitions for each type
-- [ ] Document in [integration-spec.md](../../docs/integration/integration-spec.md)
+- [x] Create JSON Schema definitions for each type
+  > ✅ **Completed 2026-01-04**: JSON Schemas in `schemas/` directory for CallerIdentity, PolicyInput, PolicyDecision, ThemisErrorEnvelope
+- [x] Add GitHub Actions CI workflow
+  > ✅ **Completed 2026-01-04**: CI workflow with check, test, fmt, clippy, docs, schema feature testing
+- [x] Document in [integration-spec.md](../../docs/integration/integration-spec.md)
+  > ✅ **Completed 2026-01-04**: Integration spec has authoritative type definitions
 
 ### Shared Types Location Strategy
 
@@ -92,16 +114,9 @@ themis-platform/
 - [x] Write initial documentation
   > **Completed 2026-01-04**: Created development.md guide, updated README with Quick Start, added users-service example contract
 - [ ] Integrate `themis-platform-types` dependency
+  > ⏳ **Ready**: Shared crate available, migration pending
 - [ ] Refactor error types to use `ThemisErrorEnvelope` from shared crate
-
-### Week 2: Core Types
-
-- [ ] Implement `Contract` model
-- [ ] Implement `Operation` model
-- [ ] Implement `Schema` types
-- [ ] Implement `Version` (semver)
-- [ ] Implement error types
-- [ ] Write serialization tests
+  > ⏳ **Ready**: Shared crate available, migration pending
 
 ### Week 3: OpenAPI Parser
 
@@ -222,14 +237,44 @@ themis-platform/
 
 ---
 
+## Phase T5: Integration Testing (Weeks 13-14) ⭐ NEW
+
+> **Purpose**: Validate that Themis artifacts work correctly with Archimedes and Eunomia.
+
+### Week 13: Archimedes Integration
+
+- [ ] Test artifact loading in Archimedes
+- [ ] Verify operation → handler mapping
+- [ ] Test request validation with generated schemas
+- [ ] Test response validation
+- [ ] Verify error envelope format matches shared types
+- [ ] Document integration patterns
+
+### Week 14: End-to-End Testing
+
+- [ ] Create integration test suite
+- [ ] Test full workflow: contract → artifact → Archimedes validation
+- [ ] Test policy context includes correct operation metadata
+- [ ] Verify `PolicyInput.operation_id` matches Themis operationId
+- [ ] Performance testing with large contracts
+- [ ] Write integration documentation
+
+### Phase T5 Milestone
+
+**Criteria**: Themis artifacts work seamlessly with Archimedes runtime
+
+---
+
 ## Milestones Summary
 
 | Milestone         | Target  | Criteria                                |
 | ----------------- | ------- | --------------------------------------- |
+| T0: Shared Types  | Week 1  | Platform types crate published          |
 | T1: Parsing       | Week 4  | OpenAPI specs parsed correctly          |
 | T2: Compatibility | Week 6  | Breaking changes detected               |
 | T3: Code Gen      | Week 10 | Rust, TypeScript, Python code generated |
 | T4: Publishing    | Week 12 | Artifacts published to registry         |
+| T5: Integration   | Week 14 | End-to-end testing with Archimedes      |
 
 ---
 
@@ -246,7 +291,8 @@ themis-platform/
 
 ### Crates
 
-- `themis-core` - Core types and traits
+- `themis-platform-types` - **Shared types** (CallerIdentity, PolicyInput, ThemisErrorEnvelope)
+- `themis-core` - Core types and traits (depends on `themis-platform-types`)
 - `themis-openapi` - OpenAPI 3.1 parser
 - `themis-protobuf` - Protobuf parser (future)
 - `themis-graphql` - GraphQL parser (future)
@@ -261,10 +307,25 @@ themis-platform/
 
 ## Dependencies on Other Components
 
-| Dependency | Required For             | Available   |
-| ---------- | ------------------------ | ----------- |
-| None       | Core development (T1-T4) | Immediately |
-| Archimedes | Runtime validation       | Week 12+    |
+| Dependency              | Required For              | Available   |
+| ----------------------- | ------------------------- | ----------- |
+| None                    | Core development (T1-T4)  | Immediately |
+| `themis-platform-types` | Shared types (T0)         | Week 1      |
+| Archimedes              | Integration testing (T5)  | Week 13+    |
+| Eunomia                 | Policy context validation | Week 13+    |
+
+---
+
+## Integration Contracts
+
+> **See**: [integration-spec.md](../../docs/integration/integration-spec.md) for authoritative schema definitions.
+
+Themis MUST produce artifacts that:
+
+1. Use `ThemisErrorEnvelope` from `themis-platform-types` for all error responses
+2. Include `operationId` for every operation (used by Eunomia policies)
+3. Follow the artifact format defined in integration-spec.md
+4. Include JSON schemas compatible with Archimedes validation
 
 ---
 

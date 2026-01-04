@@ -15,12 +15,17 @@ repository = "https://github.com/A-Somniatore/themis"
 rust-version = "1.75"
 
 [workspace.dependencies]
+# Shared platform types
+themis-platform-types = { git = "https://github.com/A-Somniatore/themis-platform-types", branch = "main" }
+
 # Core dependencies
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_yaml = "0.9"
 thiserror = "2.0"
 anyhow = "1.0"
+uuid = { version = "1.0", features = ["v7", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
 
 # Async runtime
 tokio = { version = "1.0", features = ["full"] }

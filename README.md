@@ -150,14 +150,14 @@ themis/
 
 ## CLI Commands
 
-| Command | Description | Status |
-|---------|-------------|--------|
-| `themis validate` | Validate contract syntax and schema | 🚧 Week 4 |
-| `themis lint` | Run linting rules | 🚧 Week 5 |
-| `themis diff` | Compare two contract versions | 🚧 Week 6 |
-| `themis codegen` | Generate code (Rust, TypeScript, Python) | 🚧 Week 7-10 |
-| `themis publish` | Publish artifact to registry | 🚧 Week 11 |
-| `themis fetch` | Fetch artifact from registry | 🚧 Week 12 |
+| Command           | Description                              | Status       |
+| ----------------- | ---------------------------------------- | ------------ |
+| `themis validate` | Validate contract syntax and schema      | 🚧 Week 4    |
+| `themis lint`     | Run linting rules                        | 🚧 Week 5    |
+| `themis diff`     | Compare two contract versions            | 🚧 Week 6    |
+| `themis codegen`  | Generate code (Rust, TypeScript, Python) | 🚧 Week 7-10 |
+| `themis publish`  | Publish artifact to registry             | 🚧 Week 11   |
+| `themis fetch`    | Fetch artifact from registry             | 🚧 Week 12   |
 
 ## Related Projects
 

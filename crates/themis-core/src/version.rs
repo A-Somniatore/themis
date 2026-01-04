@@ -51,7 +51,12 @@ impl Version {
 
     /// Creates a new version with a pre-release identifier.
     #[must_use]
-    pub fn with_pre_release(major: u32, minor: u32, patch: u32, pre_release: impl Into<String>) -> Self {
+    pub fn with_pre_release(
+        major: u32,
+        minor: u32,
+        patch: u32,
+        pre_release: impl Into<String>,
+    ) -> Self {
         Self {
             major,
             minor,

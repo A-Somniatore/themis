@@ -99,11 +99,7 @@ pub struct Contract {
 
 impl Contract {
     /// Creates a new contract with the given metadata.
-    pub fn new(
-        format: ContractFormat,
-        version: Version,
-        service_name: impl Into<String>,
-    ) -> Self {
+    pub fn new(format: ContractFormat, version: Version, service_name: impl Into<String>) -> Self {
         Self {
             format,
             version,

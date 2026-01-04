@@ -6,17 +6,17 @@ This guide covers setting up your local development environment for Themis.
 
 ### Required Software
 
-| Software | Version | Purpose |
-|----------|---------|---------|
-| Rust | 1.75+ | Core development |
-| Git | 2.x | Version control |
+| Software | Version | Purpose          |
+| -------- | ------- | ---------------- |
+| Rust     | 1.75+   | Core development |
+| Git      | 2.x     | Version control  |
 
 ### Optional Software
 
-| Software | Version | Purpose |
-|----------|---------|---------|
-| Docker | 24.x | Container testing |
-| Just | 1.x | Task runner |
+| Software | Version | Purpose           |
+| -------- | ------- | ----------------- |
+| Docker   | 24.x    | Container testing |
+| Just     | 1.x     | Task runner       |
 
 ## Installation
 
@@ -158,6 +158,7 @@ cargo clippy -- -D warnings
 ```
 
 Our workspace enforces these lints:
+
 - `unsafe_code = "forbid"` - No unsafe code allowed
 - `missing_docs = "warn"` - All public items should be documented
 - Clippy `pedantic` and `nursery` lints enabled
@@ -194,18 +195,20 @@ mod tests {
 ### VS Code
 
 Recommended extensions:
+
 - `rust-analyzer` - Rust language support
 - `Even Better TOML` - TOML file support
 - `crates` - Dependency version management
 
 Settings (`.vscode/settings.json`):
+
 ```json
 {
-    "rust-analyzer.checkOnSave.command": "clippy",
-    "editor.formatOnSave": true,
-    "[rust]": {
-        "editor.defaultFormatter": "rust-lang.rust-analyzer"
-    }
+  "rust-analyzer.checkOnSave.command": "clippy",
+  "editor.formatOnSave": true,
+  "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer"
+  }
 }
 ```
 

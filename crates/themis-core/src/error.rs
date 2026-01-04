@@ -1,10 +1,37 @@
 //! Error types for Themis.
 //!
 //! Provides a standardized error model used across all Themis components.
+//!
+//! This module provides two types of errors:
+//! - [`ThemisError`] - Internal errors for Themis toolchain operations
+//! - [`ThemisErrorEnvelope`] - Standard API error format (re-exported from shared types)
+//!
+//! ## Usage
+//!
+//! For CLI and toolchain errors, use `ThemisError`:
+//! ```rust
+//! use themis_core::error::ThemisError;
+//!
+//! fn validate_contract() -> Result<(), ThemisError> {
+//!     Err(ThemisError::SchemaValidation {
+//!         message: "Missing operationId".to_string(),
+//!     })
+//! }
+//! ```
+//!
+//! For API responses, use the shared `ThemisErrorEnvelope`:
+//! ```rust
+//! use themis_core::error::ThemisErrorEnvelope;
+//!
+//! let error = ThemisErrorEnvelope::validation_failed("Invalid request");
+//! ```
 
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use thiserror::Error;
+
+// Re-export shared error types from themis-platform-types
+pub use themis_platform_types::{ErrorCode, FieldError, ThemisErrorEnvelope};
 
 /// Result type alias using [`ThemisError`].
 pub type ThemisResult<T> = Result<T, ThemisError>;
