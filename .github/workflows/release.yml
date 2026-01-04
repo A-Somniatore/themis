@@ -1,0 +1,110 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            artifact_name: themis
+            asset_name: themis-linux-amd64
+
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            artifact_name: themis
+            asset_name: themis-darwin-amd64
+
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            artifact_name: themis
+            asset_name: themis-darwin-arm64
+
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            artifact_name: themis.exe
+            asset_name: themis-windows-amd64.exe
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-action@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.target }} -p themis-cli
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/**/*
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref, '-') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-crates:
+    name: Publish to crates.io
+    needs: release
+    runs-on: ubuntu-latest
+    if: "!contains(github.ref, '-')"  # Don't publish pre-releases
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-action@stable
+
+      - name: Publish themis-core
+        run: cargo publish -p themis-core --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        continue-on-error: true
+
+      - name: Publish themis-openapi
+        run: |
+          sleep 30  # Wait for themis-core to be available
+          cargo publish -p themis-openapi --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        continue-on-error: true
+
+      - name: Publish themis-lint
+        run: |
+          sleep 30
+          cargo publish -p themis-lint --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        continue-on-error: true
+
+      - name: Publish themis-cli
+        run: |
+          sleep 30
+          cargo publish -p themis-cli --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        continue-on-error: true
