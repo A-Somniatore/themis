@@ -352,6 +352,16 @@ themis/
 7. **Error handling** – No `.unwrap()` in production code
 8. **Contract-first** – APIs are defined in contracts, not inferred from code
 
+## Terminal Command Guidelines
+
+When running terminal commands:
+
+- **Do NOT use `2>&1`** for stderr redirection – let errors display naturally
+- Use `&&` to chain dependent commands
+- Prefer absolute paths for file operations
+- Run one command at a time for long-running tasks
+- For background processes (servers, watch mode), set `isBackground: true`
+
 ## CI Checklist
 
 Before creating a PR, ensure:
