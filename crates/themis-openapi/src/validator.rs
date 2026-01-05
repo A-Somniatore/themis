@@ -237,6 +237,7 @@ pub fn validate_contract(contract: &Contract) -> ValidationResult {
     validate_operation_ids(contract, &mut result);
     validate_security_schemes(contract, &mut result);
     validate_error_responses(contract, &mut result);
+    validate_response_schemas(contract, &mut result);
     validate_descriptions(contract, &mut result);
 
     result
@@ -414,6 +415,27 @@ fn validate_descriptions(contract: &Contract, result: &mut ValidationResult) {
                 format!("Schema '{schema_name}' is missing a description"),
                 Some(format!("components.schemas.{schema_name}.description")),
             );
+        }
+    }
+}
+
+/// Validates that responses have schemas defined.
+fn validate_response_schemas(contract: &Contract, result: &mut ValidationResult) {
+    for (operation_id, operation) in &contract.operations {
+        for (status_code, response) in &operation.responses {
+            // Success responses (2xx) should have a schema (except 204 No Content)
+            if status_code.starts_with('2') && status_code != "204" && response.content.is_empty() {
+                result.add_warning(
+                    rules::MISSING_RESPONSE_SCHEMA,
+                    format!(
+                        "Operation '{operation_id}' response {status_code} has no response schema"
+                    ),
+                    Some(operation_json_path(
+                        operation,
+                        &format!("responses.{status_code}"),
+                    )),
+                );
+            }
         }
     }
 }
@@ -644,5 +666,53 @@ paths:
             .warnings
             .iter()
             .any(|w| w.code == rules::NO_SECURITY_DEFINED));
+    }
+
+    #[test]
+    fn test_validate_missing_response_schema_warning() {
+        let openapi = r#"
+openapi: "3.1.0"
+info:
+  title: Test API
+  version: "1.0.0"
+paths:
+  /test:
+    get:
+      operationId: getTest
+      responses:
+        "200":
+          description: Success but no schema
+"#;
+        let result = validate_openapi(openapi).unwrap();
+
+        // Should have warning for missing response schema
+        assert!(result
+            .warnings
+            .iter()
+            .any(|w| w.code == rules::MISSING_RESPONSE_SCHEMA));
+    }
+
+    #[test]
+    fn test_validate_204_no_content_ok() {
+        let openapi = r#"
+openapi: "3.1.0"
+info:
+  title: Test API
+  version: "1.0.0"
+paths:
+  /test:
+    delete:
+      operationId: deleteTest
+      responses:
+        "204":
+          description: No Content
+"#;
+        let result = validate_openapi(openapi).unwrap();
+
+        // 204 responses should not require a schema
+        assert!(!result
+            .warnings
+            .iter()
+            .any(|w| w.code == rules::MISSING_RESPONSE_SCHEMA));
     }
 }
