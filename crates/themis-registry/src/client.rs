@@ -511,7 +511,7 @@ impl RegistryClient {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wiremock::matchers::{method, path, path_regex};
+    use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
     async fn setup_mock_server() -> (MockServer, RegistryClient) {

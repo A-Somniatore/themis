@@ -295,7 +295,7 @@ impl ArtifactCache {
 mod tests {
     use super::*;
     use tempfile::TempDir;
-    use themis_artifact::{Artifact, ArtifactBuilder, ArtifactMetadata, Checksum};
+    use themis_artifact::{Artifact, ArtifactMetadata, Checksum};
 
     fn temp_cache() -> (TempDir, ArtifactCache) {
         let dir = TempDir::new().unwrap();
