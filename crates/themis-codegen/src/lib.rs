@@ -43,8 +43,10 @@ mod config;
 mod error;
 mod rust;
 mod traits;
+mod typescript;
 
 pub use config::{GeneratorConfig, NamingConvention};
 pub use error::{CodegenError, CodegenResult};
 pub use rust::RustGenerator;
 pub use traits::{CodeGenerator, GeneratedCode, GeneratedFile};
+pub use typescript::TypeScriptGenerator;

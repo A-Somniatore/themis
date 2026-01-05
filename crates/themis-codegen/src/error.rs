@@ -52,6 +52,13 @@ pub enum CodegenError {
         /// Description of the error.
         message: String,
     },
+
+    /// The contract has no operations to generate.
+    #[error("Contract '{name}' has no operations to generate")]
+    EmptyContract {
+        /// Name of the empty contract.
+        name: String,
+    },
 }
 
 impl CodegenError {
