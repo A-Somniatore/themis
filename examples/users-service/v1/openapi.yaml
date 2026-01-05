@@ -22,8 +22,9 @@ servers:
 components:
   securitySchemes:
     spiffe:
-      type: mutualTLS
-      description: Internal service-to-service authentication via SPIFFE
+      type: http
+      scheme: mutual
+      description: Internal service-to-service authentication via SPIFFE (mTLS)
     bearer:
       type: http
       scheme: bearer

@@ -26,4 +26,6 @@ pub mod parser;
 pub mod validator;
 
 pub use parser::parse_openapi;
-pub use validator::validate_openapi;
+pub use validator::{
+    validate_contract, validate_openapi, Severity, ValidationIssue, ValidationResult,
+};
