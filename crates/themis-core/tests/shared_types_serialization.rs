@@ -28,8 +28,11 @@ mod caller_identity {
 
     #[test]
     fn spiffe_identity_json_roundtrip() {
-        let identity =
-            CallerIdentity::spiffe_full("spiffe://example.org/orders-service", "example.org", "orders-service");
+        let identity = CallerIdentity::spiffe_full(
+            "spiffe://example.org/orders-service",
+            "example.org",
+            "orders-service",
+        );
 
         let json = serde_json::to_string(&identity).expect("Failed to serialize SpiffeIdentity");
 
@@ -60,7 +63,8 @@ mod caller_identity {
         assert!(value.get("trust_domain").is_none() || value["trust_domain"].is_null());
 
         // Verify round-trip
-        let deserialized: CallerIdentity = serde_json::from_str(&json).expect("Failed to deserialize");
+        let deserialized: CallerIdentity =
+            serde_json::from_str(&json).expect("Failed to deserialize");
         assert_eq!(identity, deserialized);
     }
 
@@ -100,7 +104,8 @@ mod caller_identity {
 
         // Verify round-trip
         let json_output = serde_json::to_string(&identity).expect("Failed to serialize");
-        let roundtrip: CallerIdentity = serde_json::from_str(&json_output).expect("Failed to roundtrip");
+        let roundtrip: CallerIdentity =
+            serde_json::from_str(&json_output).expect("Failed to roundtrip");
         assert_eq!(identity, roundtrip);
 
         // Verify type checking
@@ -141,7 +146,8 @@ mod caller_identity {
 
         // Verify round-trip
         let json_output = serde_json::to_string(&identity).expect("Failed to serialize");
-        let roundtrip: CallerIdentity = serde_json::from_str(&json_output).expect("Failed to roundtrip");
+        let roundtrip: CallerIdentity =
+            serde_json::from_str(&json_output).expect("Failed to roundtrip");
         assert_eq!(identity, roundtrip);
 
         assert!(identity.is_api_key());
@@ -204,7 +210,8 @@ mod error_envelope {
         assert!(value["timestamp"].is_string());
 
         // Verify round-trip
-        let deserialized: ThemisErrorEnvelope = serde_json::from_str(&json).expect("Failed to deserialize");
+        let deserialized: ThemisErrorEnvelope =
+            serde_json::from_str(&json).expect("Failed to deserialize");
         assert_eq!(envelope.code, deserialized.code);
         assert_eq!(envelope.message, deserialized.message);
     }
@@ -293,7 +300,8 @@ mod error_code {
             assert_eq!(json, format!("\"{}\"", expected_str));
 
             // Round-trip
-            let deserialized: ErrorCode = serde_json::from_str(&json).expect("Failed to deserialize");
+            let deserialized: ErrorCode =
+                serde_json::from_str(&json).expect("Failed to deserialize");
             assert_eq!(code, deserialized);
         }
     }

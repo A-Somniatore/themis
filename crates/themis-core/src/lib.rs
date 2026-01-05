@@ -52,9 +52,11 @@ pub use themis_platform_types::{
     // Identity types
     CallerIdentity,
     // Error types
-    ErrorCode, FieldError, ThemisErrorEnvelope,
+    ErrorCode,
+    FieldError,
     // Request types
     RequestId,
     // Version types
     SemanticVersion,
+    ThemisErrorEnvelope,
 };
