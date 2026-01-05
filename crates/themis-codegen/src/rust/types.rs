@@ -35,8 +35,7 @@ impl<'a> RustTypeGenerator<'a> {
         // Generate imports
         output.push_str("use serde::{Deserialize, Serialize};\n");
         if self.config.include_validation {
-            output.push_str("#[allow(unused_imports)]\n");
-            output.push_str("use std::collections::HashMap;\n");
+            output.push_str("use validator::Validate;\n");
         }
         output.push('\n');
 
@@ -90,6 +89,9 @@ impl<'a> RustTypeGenerator<'a> {
         if self.config.include_serialization {
             derives.extend(["Serialize", "Deserialize"]);
         }
+        if self.config.include_validation {
+            derives.push("Validate");
+        }
 
         let _ = writeln!(output, "#[derive({})]", derives.join(", "));
 
@@ -137,6 +139,14 @@ impl<'a> RustTypeGenerator<'a> {
         } else {
             rust_type
         };
+
+        // Add validation attributes
+        if self.config.include_validation {
+            let validation_attrs = Self::generate_validation_attributes(schema);
+            if !validation_attrs.is_empty() {
+                let _ = writeln!(output, "    #[validate({validation_attrs})]");
+            }
+        }
 
         // Add serde attributes if field name differs
         if self.config.include_serialization && rust_name != name {
@@ -437,6 +447,102 @@ impl<'a> RustTypeGenerator<'a> {
             | Schema::Null => false,
         }
     }
+
+    /// Generates validation attributes for a schema.
+    ///
+    /// Maps OpenAPI schema constraints to validator crate attributes:
+    /// - minLength/maxLength → length(min, max)
+    /// - minimum/maximum → range(min, max)
+    /// - pattern → regex
+    /// - format: email → email
+    /// - format: url → url
+    /// - minItems/maxItems → length(min, max)
+    fn generate_validation_attributes(schema: &Schema) -> String {
+        let mut attrs = Vec::new();
+
+        match schema {
+            Schema::String(s) => {
+                // Length constraints
+                match (s.min_length, s.max_length) {
+                    (Some(min), Some(max)) => {
+                        attrs.push(format!("length(min = {min}, max = {max})"));
+                    }
+                    (Some(min), None) => {
+                        attrs.push(format!("length(min = {min})"));
+                    }
+                    (None, Some(max)) => {
+                        attrs.push(format!("length(max = {max})"));
+                    }
+                    (None, None) => {}
+                }
+
+                // Pattern constraint
+                if let Some(pattern) = &s.pattern {
+                    // Escape the pattern for use in a string literal
+                    let escaped = pattern.replace('\\', "\\\\").replace('"', "\\\"");
+                    attrs.push(format!("regex(path = \"*{escaped}*\")"));
+                }
+
+                // Format-based validation
+                if let Some(format) = &s.format {
+                    match format.as_str() {
+                        "email" => attrs.push("email".to_string()),
+                        "uri" | "url" => attrs.push("url".to_string()),
+                        _ => {}
+                    }
+                }
+            }
+            Schema::Integer(i) => {
+                // Range constraints
+                match (i.minimum, i.maximum) {
+                    (Some(min), Some(max)) => {
+                        attrs.push(format!("range(min = {min}, max = {max})"));
+                    }
+                    (Some(min), None) => {
+                        attrs.push(format!("range(min = {min})"));
+                    }
+                    (None, Some(max)) => {
+                        attrs.push(format!("range(max = {max})"));
+                    }
+                    (None, None) => {}
+                }
+            }
+            Schema::Number(n) => {
+                // Range constraints for floats
+                match (n.minimum, n.maximum) {
+                    (Some(min), Some(max)) => {
+                        attrs.push(format!("range(min = {min}, max = {max})"));
+                    }
+                    (Some(min), None) => {
+                        attrs.push(format!("range(min = {min})"));
+                    }
+                    (None, Some(max)) => {
+                        attrs.push(format!("range(max = {max})"));
+                    }
+                    (None, None) => {}
+                }
+            }
+            Schema::Array(a) => {
+                // Length constraints for arrays
+                match (a.min_items, a.max_items) {
+                    (Some(min), Some(max)) => {
+                        attrs.push(format!("length(min = {min}, max = {max})"));
+                    }
+                    (Some(min), None) => {
+                        attrs.push(format!("length(min = {min})"));
+                    }
+                    (None, Some(max)) => {
+                        attrs.push(format!("length(max = {max})"));
+                    }
+                    (None, None) => {}
+                }
+            }
+            // Other schema types don't have simple validation constraints
+            _ => {}
+        }
+
+        attrs.join(", ")
+    }
 }
 
 /// Formats a doc comment.
@@ -600,5 +706,88 @@ mod tests {
     fn test_format_doc_comment_with_indent() {
         let result = format_doc_comment("A description", 1);
         assert_eq!(result, "    /// A description\n");
+    }
+
+    #[test]
+    fn test_validation_attributes_string_length() {
+        use themis_core::schema::StringSchema;
+        let schema = Schema::String(StringSchema {
+            min_length: Some(1),
+            max_length: Some(100),
+            ..Default::default()
+        });
+
+        let attrs = RustTypeGenerator::generate_validation_attributes(&schema);
+        assert_eq!(attrs, "length(min = 1, max = 100)");
+    }
+
+    #[test]
+    fn test_validation_attributes_email() {
+        use themis_core::schema::StringSchema;
+        let schema = Schema::String(StringSchema {
+            format: Some("email".to_string()),
+            ..Default::default()
+        });
+
+        let attrs = RustTypeGenerator::generate_validation_attributes(&schema);
+        assert_eq!(attrs, "email");
+    }
+
+    #[test]
+    fn test_validation_attributes_url() {
+        use themis_core::schema::StringSchema;
+        let schema = Schema::String(StringSchema {
+            format: Some("uri".to_string()),
+            ..Default::default()
+        });
+
+        let attrs = RustTypeGenerator::generate_validation_attributes(&schema);
+        assert_eq!(attrs, "url");
+    }
+
+    #[test]
+    fn test_validation_attributes_integer_range() {
+        use themis_core::schema::IntegerSchema;
+        let schema = Schema::Integer(IntegerSchema {
+            minimum: Some(0),
+            maximum: Some(100),
+            ..Default::default()
+        });
+
+        let attrs = RustTypeGenerator::generate_validation_attributes(&schema);
+        assert_eq!(attrs, "range(min = 0, max = 100)");
+    }
+
+    #[test]
+    fn test_validation_attributes_array_length() {
+        let schema = Schema::Array(ArraySchema {
+            items: Box::new(Schema::String(StringSchema::default())),
+            min_items: Some(1),
+            max_items: Some(10),
+            ..Default::default()
+        });
+
+        let attrs = RustTypeGenerator::generate_validation_attributes(&schema);
+        assert_eq!(attrs, "length(min = 1, max = 10)");
+    }
+
+    #[test]
+    fn test_validation_derive_in_struct() {
+        let config = make_config();
+        let gen = RustTypeGenerator::new(&config);
+
+        let obj = ObjectSchema {
+            properties: {
+                let mut props = HashMap::new();
+                props.insert("name".to_string(), Schema::String(StringSchema::default()));
+                props
+            },
+            required: vec!["name".to_string()],
+            ..Default::default()
+        };
+
+        let code = gen.generate_struct("User", &obj).unwrap();
+        assert!(code.contains("Validate"));
+        assert!(code.contains("#[derive("));
     }
 }
