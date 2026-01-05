@@ -1,26 +1,27 @@
 # Themis – Development Roadmap
 
-> **Version**: 1.8.0  
+> **Version**: 1.9.0  
 > **Created**: 2026-01-04  
 > **Last Updated**: 2026-01-06  
 > **Target Completion**: Week 14 (MVP)
-> **Current Progress**: Phase T3 In Progress (Week 9 Complete)
+> **Current Progress**: Phase T3 Complete (Week 10 Complete)
 
 ---
 
 ## ✅ CTO Architecture Review Action Items (Resolved)
 
-> **Source**: [2026-01-04 CTO Architecture Review](../../docs/reviews/2026-01-04-cto-architecture-review.md)
-> **Status**: ✅ RESOLVED - `themis-platform-types` v0.2.0 addresses all issues
+> **Source**: [2026-01-04 CTO Architecture Review](../../docs/reviews/2026-01-04-cto-architecture-review.md) > **Status**: ✅ RESOLVED - `themis-platform-types` v0.2.0 addresses all issues
 
 ### Resolved Issues (2026-01-05)
 
 1. **JSON Schema vs Rust Implementation Mismatch** - ✅ FIXED
+
    - [x] Aligned `caller-identity.schema.json` with Rust `identity.rs`
    - [x] Added JSON round-trip tests to themis-platform-types
    - [x] Added schema validation CI script
 
 2. **API Safety Improvements** - ✅ COMPLETE
+
    - [x] `BuilderError` type replaces `&'static str` errors
    - [x] `build()` deprecated, `try_build()` is the new standard
    - [x] `#[non_exhaustive]` on public enums for future compatibility
@@ -122,6 +123,7 @@ Themis is the contract governance toolchain for the Themis Platform. Development
 ### Cross-Component Timeline Alignment
 
 **MVP Timeline (Weeks 1-20):**
+
 ```
          Week: 1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20
  Themis:      [T0][---T1---][--T2--][------T3------][--T4--][--T5--]
@@ -130,6 +132,7 @@ Themis is the contract governance toolchain for the Themis Platform. Development
 ```
 
 **Full Framework Timeline (Weeks 21-40):**
+
 ```
          Week: 21  22  23  24  25  26  27  28  29  30  31  32  33  34  35  36  37  38  39  40
  Archimedes:  [------A6------][------A7------][------A8------][------A9------][-----A10------]
@@ -262,6 +265,7 @@ themis-platform/
 ### Phase T1 Milestone
 
 **Criteria**: OpenAPI specs can be parsed, validated, and loaded
+
 > **✅ COMPLETE 2026-01-05**: All Week 4 validation features implemented. 50 tests passing.
 
 ---
@@ -306,6 +310,7 @@ themis-platform/
 ### Phase T2 Milestone
 
 **Criteria**: Breaking changes are detected, contracts can be linted
+
 > **✅ COMPLETE 2026-01-05**: All Week 5 & 6 features implemented. 116 tests total.
 
 ---
@@ -358,16 +363,22 @@ themis-platform/
 
 ### Week 10: Python Generation
 
-- [ ] Generate Python dataclasses
-- [ ] Generate httpx client
-- [ ] Generate FastAPI handler signatures
-- [ ] Add type hints
-- [ ] Create package output
-- [ ] Add `themis codegen --language python` CLI command
+- [x] Generate Python dataclasses
+  > **Completed 2026-01-06**: PythonTypeGenerator produces @dataclass from OpenAPI schemas
+- [x] Generate httpx client
+  > **Completed 2026-01-06**: httpx client with Result pattern, context manager support
+- [x] Generate FastAPI handler signatures
+  > **Completed 2026-01-06**: FastAPI router factory with RequestContext and Protocol-based handlers
+- [x] Add type hints
+  > **Completed 2026-01-06**: Full type hints including Optional, Union, list[], dict[]
+- [ ] Create package output (optional enhancement)
+- [x] Add `themis codegen --language python` CLI command
+  > **Completed 2026-01-06**: CLI supports --language python
 
-### Phase T3 Milestone
+### Phase T3 Milestone ✅
 
 **Criteria**: Rust, TypeScript, and Python code can be generated from contracts
+**Status**: COMPLETE - All three language generators implemented with full test coverage
 
 ---
 
