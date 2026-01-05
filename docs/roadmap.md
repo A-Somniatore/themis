@@ -1,10 +1,10 @@
 # Themis – Development Roadmap
 
-> **Version**: 1.3.0  
+> **Version**: 1.4.0  
 > **Created**: 2026-01-04  
-> **Last Updated**: 2026-01-05  
+> **Last Updated**: 2026-01-06  
 > **Target Completion**: Week 14 (MVP)
-> **Current Progress**: Phase T2 Complete (Week 6)
+> **Current Progress**: Phase T3 In Progress (Week 7)
 
 ---
 
@@ -238,14 +238,19 @@ themis-platform/
 
 ## Phase T3: Code Generation (Weeks 7-10)
 
-### Week 7: Rust Types Generation
+### Week 7: Rust Types Generation ✅
 
-- [ ] Create `themis-codegen` crate
-- [ ] Generate Rust structs from schemas
-- [ ] Handle nested types
-- [ ] Add serde derives
+- [x] Create `themis-codegen` crate
+  > **Completed 2026-01-06**: Created crate with CodeGenerator trait, GeneratorConfig, error types
+- [x] Generate Rust structs from schemas
+  > **Completed 2026-01-06**: RustTypeGenerator with generate_struct, handles properties, required fields
+- [x] Handle nested types
+  > **Completed 2026-01-06**: Supports oneOf, allOf, anyOf composition schemas
+- [x] Add serde derives
+  > **Completed 2026-01-06**: Adds Serialize, Deserialize, rename_all, skip_serializing_if
 - [ ] Generate validation derives
-- [ ] Test generated code compiles
+- [x] Test generated code compiles
+  > **Completed 2026-01-06**: 24 tests covering all type generation scenarios
 
 ### Week 8: Rust Handlers & CLI
 
