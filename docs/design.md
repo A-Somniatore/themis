@@ -1489,6 +1489,42 @@ Themis separates **validation** from **linting**:
 | `security/require-auth`    | off      | All operations must have security (except allow list) |
 | `versioning/path-version`  | off      | Paths should include version prefix              |
 
+### 8.6 Breaking Change Detection
+
+The `themis diff` command compares two contract versions and detects breaking changes.
+
+#### Change Categories
+
+| Category   | Description                                    | Semver Impact |
+| ---------- | ---------------------------------------------- | ------------- |
+| Breaking   | Changes that break existing clients            | Major bump    |
+| Addition   | Backwards-compatible new features              | Minor bump    |
+| Modification | Non-functional changes (docs, descriptions) | Patch bump    |
+
+#### Breaking Change Rules
+
+| Rule Code  | Change Type                    | Severity |
+| ---------- | ------------------------------ | -------- |
+| BREAK001   | Operation removed              | Breaking |
+| BREAK002   | Operation path changed         | Breaking |
+| BREAK003   | Operation method changed       | Breaking |
+| BREAK004   | Required field added to request| Breaking |
+| BREAK005   | Field removed from response    | Breaking |
+| BREAK006   | Field type changed             | Breaking |
+| BREAK007   | Field became required          | Breaking |
+| BREAK008   | Enum value removed             | Breaking |
+| BREAK009   | Security scheme removed        | Breaking |
+
+#### Addition Rules (Non-Breaking)
+
+| Rule Code  | Change Type                    | Semver   |
+| ---------- | ------------------------------ | -------- |
+| ADD001     | Operation added                | Minor    |
+| ADD002     | Optional field added to request| Minor    |
+| ADD003     | Field added to response        | Minor    |
+| ADD004     | Enum value added               | Minor    |
+| ADD005     | Security scheme added          | Minor    |
+
 ---
 
 ## 9. Code Generation

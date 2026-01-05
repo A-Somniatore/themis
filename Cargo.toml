@@ -4,6 +4,7 @@ members = [
     "crates/themis-core",
     "crates/themis-openapi",
     "crates/themis-lint",
+    "crates/themis-compat",
     "crates/themis-cli",
 ]
 
