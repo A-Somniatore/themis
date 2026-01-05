@@ -5,7 +5,8 @@ use crate::config::GeneratorConfig;
 use crate::error::{CodegenError, CodegenResult};
 use crate::traits::{CodeGenerator, GeneratedCode, GeneratedFile};
 use std::fmt::Write;
-use themis_core::Contract;
+use themis_core::operation::{Parameter, ParameterLocation};
+use themis_core::{Contract, Operation, Schema};
 
 /// Rust code generator.
 ///
@@ -46,11 +47,33 @@ impl RustGenerator {
 
         // Header
         output.push_str(&Self::generate_header(contract));
+
+        // Imports
         output.push_str("use super::types::*;\n");
+        output.push_str("use std::error::Error as StdError;\n");
+        output.push_str("use std::fmt;\n");
         output.push('\n');
         output.push_str("#[allow(unused_imports)]\n");
         output.push_str("use async_trait::async_trait;\n");
         output.push('\n');
+
+        // Generate RequestContext placeholder
+        output.push_str(&Self::generate_request_context());
+        output.push('\n');
+
+        // Generate error types
+        output.push_str(&Self::generate_error_types(contract, &self.config));
+        output.push('\n');
+
+        // Generate request/response types for each operation
+        for (op_id, operation) in &contract.operations {
+            output.push_str(&Self::generate_operation_types(
+                op_id,
+                operation,
+                &self.config,
+            ));
+            output.push('\n');
+        }
 
         // Generate handler trait for each operation
         for (op_id, operation) in &contract.operations {
@@ -68,10 +91,371 @@ impl RustGenerator {
         output
     }
 
+    /// Generates the RequestContext struct.
+    ///
+    /// This is a placeholder that can be replaced with Archimedes' RequestContext
+    /// once integration is established.
+    fn generate_request_context() -> String {
+        r"/// Request context containing metadata about the incoming request.
+///
+/// This struct provides access to request headers, authentication info,
+/// and other contextual data. It will integrate with Archimedes' RequestContext
+/// in production deployments.
+#[derive(Debug, Clone)]
+pub struct RequestContext {
+    /// Request ID for tracing
+    pub request_id: String,
+    /// Optional authenticated user ID
+    pub user_id: Option<String>,
+    /// Request headers (key-value pairs)
+    pub headers: std::collections::HashMap<String, String>,
+}
+
+impl Default for RequestContext {
+    fn default() -> Self {
+        Self {
+            request_id: String::new(),
+            user_id: None,
+            headers: std::collections::HashMap::new(),
+        }
+    }
+}
+
+impl RequestContext {
+    /// Creates a new request context with the given request ID.
+    pub fn new(request_id: impl Into<String>) -> Self {
+        Self {
+            request_id: request_id.into(),
+            ..Default::default()
+        }
+    }
+
+    /// Gets a header value by name.
+    pub fn header(&self, name: &str) -> Option<&str> {
+        self.headers.get(name).map(|s| s.as_str())
+    }
+}
+
+"
+        .to_string()
+    }
+
+    /// Generates error types for the service.
+    fn generate_error_types(contract: &Contract, config: &GeneratorConfig) -> String {
+        let mut output = String::new();
+        let service_name = Self::service_name(contract);
+
+        // Generate main error enum
+        if config.include_docs {
+            let _ = writeln!(output, "/// Error type for {service_name} operations.");
+        }
+        let _ = writeln!(output, "#[derive(Debug)]");
+        let _ = writeln!(output, "pub enum {service_name}Error {{");
+        let _ = writeln!(output, "    /// Bad request (400)");
+        let _ = writeln!(output, "    BadRequest(String),");
+        let _ = writeln!(output, "    /// Unauthorized (401)");
+        let _ = writeln!(output, "    Unauthorized(String),");
+        let _ = writeln!(output, "    /// Forbidden (403)");
+        let _ = writeln!(output, "    Forbidden(String),");
+        let _ = writeln!(output, "    /// Not found (404)");
+        let _ = writeln!(output, "    NotFound(String),");
+        let _ = writeln!(output, "    /// Conflict (409)");
+        let _ = writeln!(output, "    Conflict(String),");
+        let _ = writeln!(output, "    /// Unprocessable entity (422)");
+        let _ = writeln!(output, "    UnprocessableEntity(String),");
+        let _ = writeln!(output, "    /// Internal server error (500)");
+        let _ = writeln!(output, "    Internal(String),");
+        let _ = writeln!(output, "    /// Custom error with status code");
+        let _ = writeln!(output, "    Custom {{ status: u16, message: String }},");
+        let _ = writeln!(output, "}}");
+        output.push('\n');
+
+        // Implement Display
+        let _ = writeln!(output, "impl fmt::Display for {service_name}Error {{");
+        let _ = writeln!(
+            output,
+            "    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {{"
+        );
+        let _ = writeln!(output, "        match self {{");
+        let _ = writeln!(
+            output,
+            "            Self::BadRequest(msg) => write!(f, \"Bad request: {{msg}}\"),"
+        );
+        let _ = writeln!(
+            output,
+            "            Self::Unauthorized(msg) => write!(f, \"Unauthorized: {{msg}}\"),"
+        );
+        let _ = writeln!(
+            output,
+            "            Self::Forbidden(msg) => write!(f, \"Forbidden: {{msg}}\"),"
+        );
+        let _ = writeln!(
+            output,
+            "            Self::NotFound(msg) => write!(f, \"Not found: {{msg}}\"),"
+        );
+        let _ = writeln!(
+            output,
+            "            Self::Conflict(msg) => write!(f, \"Conflict: {{msg}}\"),"
+        );
+        let _ = writeln!(
+            output,
+            "            Self::UnprocessableEntity(msg) => write!(f, \"Unprocessable entity: {{msg}}\"),"
+        );
+        let _ = writeln!(
+            output,
+            "            Self::Internal(msg) => write!(f, \"Internal error: {{msg}}\"),"
+        );
+        let _ = writeln!(
+            output,
+            "            Self::Custom {{ status, message }} => write!(f, \"Error {{status}}: {{message}}\"),"
+        );
+        let _ = writeln!(output, "        }}");
+        let _ = writeln!(output, "    }}");
+        let _ = writeln!(output, "}}");
+        output.push('\n');
+
+        // Implement Error
+        let _ = writeln!(output, "impl StdError for {service_name}Error {{}}");
+        output.push('\n');
+
+        // Implement status code method
+        let _ = writeln!(output, "impl {service_name}Error {{");
+        let _ = writeln!(
+            output,
+            "    /// Returns the HTTP status code for this error."
+        );
+        let _ = writeln!(output, "    pub const fn status_code(&self) -> u16 {{");
+        let _ = writeln!(output, "        match self {{");
+        let _ = writeln!(output, "            Self::BadRequest(_) => 400,");
+        let _ = writeln!(output, "            Self::Unauthorized(_) => 401,");
+        let _ = writeln!(output, "            Self::Forbidden(_) => 403,");
+        let _ = writeln!(output, "            Self::NotFound(_) => 404,");
+        let _ = writeln!(output, "            Self::Conflict(_) => 409,");
+        let _ = writeln!(output, "            Self::UnprocessableEntity(_) => 422,");
+        let _ = writeln!(output, "            Self::Internal(_) => 500,");
+        let _ = writeln!(
+            output,
+            "            Self::Custom {{ status, .. }} => *status,"
+        );
+        let _ = writeln!(output, "        }}");
+        let _ = writeln!(output, "    }}");
+        let _ = writeln!(output, "}}");
+
+        output
+    }
+
+    /// Generates request and response types for an operation.
+    fn generate_operation_types(
+        op_id: &str,
+        operation: &Operation,
+        config: &GeneratorConfig,
+    ) -> String {
+        let mut output = String::new();
+        let type_prefix = heck::AsUpperCamelCase(op_id).to_string();
+
+        // Generate Request type
+        output.push_str(&Self::generate_request_type(
+            &type_prefix,
+            operation,
+            config,
+        ));
+        output.push('\n');
+
+        // Generate Response type
+        output.push_str(&Self::generate_response_type(
+            &type_prefix,
+            operation,
+            config,
+        ));
+
+        output
+    }
+
+    /// Generates the request type for an operation.
+    fn generate_request_type(
+        type_prefix: &str,
+        operation: &Operation,
+        config: &GeneratorConfig,
+    ) -> String {
+        let mut output = String::new();
+        let request_type = format!("{type_prefix}Request");
+
+        if config.include_docs {
+            if let Some(desc) = &operation.description {
+                let _ = writeln!(output, "/// Request for: {desc}");
+            } else if let Some(summary) = &operation.summary {
+                let _ = writeln!(output, "/// Request for: {summary}");
+            } else {
+                let _ = writeln!(output, "/// Request type for {type_prefix}.");
+            }
+        }
+
+        let _ = writeln!(
+            output,
+            "#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]"
+        );
+        let _ = writeln!(output, "pub struct {request_type} {{");
+
+        // Add path parameters
+        for param in &operation.parameters {
+            if param.location == ParameterLocation::Path {
+                let field_name = heck::AsSnakeCase(&param.name).to_string();
+                let rust_type = Self::param_to_rust_type(param);
+                if config.include_docs {
+                    if let Some(desc) = &param.description {
+                        let _ = writeln!(output, "    /// {desc}");
+                    }
+                }
+                let _ = writeln!(output, "    pub {field_name}: {rust_type},");
+            }
+        }
+
+        // Add query parameters
+        for param in &operation.parameters {
+            if param.location == ParameterLocation::Query {
+                let field_name = heck::AsSnakeCase(&param.name).to_string();
+                let rust_type = Self::param_to_rust_type(param);
+                let rust_type = if param.required {
+                    rust_type
+                } else {
+                    format!("Option<{rust_type}>")
+                };
+                if config.include_docs {
+                    if let Some(desc) = &param.description {
+                        let _ = writeln!(output, "    /// {desc}");
+                    }
+                }
+                let _ = writeln!(output, "    pub {field_name}: {rust_type},");
+            }
+        }
+
+        // Add body field if there's a request body
+        if let Some(ref body) = operation.request_body {
+            if let Some(content) = body.content.get("application/json") {
+                let body_type = match &content.schema {
+                    Schema::Ref(r) => r
+                        .reference
+                        .rsplit('/')
+                        .next()
+                        .unwrap_or("serde_json::Value")
+                        .to_string(),
+                    _ => "serde_json::Value".to_string(),
+                };
+                if config.include_docs {
+                    let _ = writeln!(output, "    /// Request body");
+                }
+                let _ = writeln!(output, "    pub body: {body_type},");
+            }
+        }
+
+        let _ = writeln!(output, "}}");
+
+        output
+    }
+
+    /// Generates the response type for an operation.
+    fn generate_response_type(
+        type_prefix: &str,
+        operation: &Operation,
+        config: &GeneratorConfig,
+    ) -> String {
+        let mut output = String::new();
+        let response_type = format!("{type_prefix}Response");
+
+        if config.include_docs {
+            let _ = writeln!(output, "/// Response type for {type_prefix}.");
+        }
+
+        let _ = writeln!(
+            output,
+            "#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]"
+        );
+        let _ = writeln!(output, "#[serde(untagged)]");
+        let _ = writeln!(output, "pub enum {response_type} {{");
+
+        // Look for success responses (2xx)
+        let mut has_variants = false;
+        for (status, response) in &operation.responses {
+            if status.starts_with('2') {
+                has_variants = true;
+                let variant_name = Self::status_to_variant_name(status);
+
+                if let Some(content) = response.content.get("application/json") {
+                    let body_type = match &content.schema {
+                        Schema::Ref(r) => r
+                            .reference
+                            .rsplit('/')
+                            .next()
+                            .unwrap_or("serde_json::Value")
+                            .to_string(),
+                        _ => "serde_json::Value".to_string(),
+                    };
+                    if config.include_docs && !response.description.is_empty() {
+                        let _ = writeln!(output, "    /// {}", response.description);
+                    }
+                    let _ = writeln!(output, "    {variant_name}({body_type}),");
+                } else {
+                    // No body
+                    if config.include_docs && !response.description.is_empty() {
+                        let _ = writeln!(output, "    /// {}", response.description);
+                    }
+                    let _ = writeln!(output, "    {variant_name},");
+                }
+            }
+        }
+
+        // If no success responses found, add a default Ok variant
+        if !has_variants {
+            let _ = writeln!(output, "    /// Success with no body");
+            let _ = writeln!(output, "    Ok,");
+        }
+
+        let _ = writeln!(output, "}}");
+
+        output
+    }
+
+    /// Converts a parameter to its Rust type.
+    fn param_to_rust_type(param: &Parameter) -> String {
+        match &param.schema {
+            Schema::String(s) => match s.format.as_deref() {
+                Some("uuid") => "uuid::Uuid".to_string(),
+                Some("date-time") => "chrono::DateTime<chrono::Utc>".to_string(),
+                Some("date") => "chrono::NaiveDate".to_string(),
+                _ => "String".to_string(),
+            },
+            Schema::Integer(_) => "i64".to_string(),
+            Schema::Number(_) => "f64".to_string(),
+            Schema::Boolean(_) => "bool".to_string(),
+            Schema::Array(a) => {
+                let item_type = match &*a.items {
+                    Schema::String(_) => "String",
+                    Schema::Integer(_) => "i64",
+                    Schema::Number(_) => "f64",
+                    Schema::Boolean(_) => "bool",
+                    _ => "serde_json::Value",
+                };
+                format!("Vec<{item_type}>")
+            }
+            _ => "serde_json::Value".to_string(),
+        }
+    }
+
+    /// Converts an HTTP status code to a variant name.
+    fn status_to_variant_name(status: &str) -> String {
+        match status {
+            "200" => "Ok".to_string(),
+            "201" => "Created".to_string(),
+            "202" => "Accepted".to_string(),
+            "204" => "NoContent".to_string(),
+            _ => format!("Status{status}"),
+        }
+    }
+
     /// Generates a handler trait for an operation.
     fn generate_handler_trait(
         op_id: &str,
-        operation: &themis_core::Operation,
+        operation: &Operation,
         config: &GeneratorConfig,
     ) -> String {
         let mut output = String::new();
@@ -79,22 +463,46 @@ impl RustGenerator {
         // Doc comment
         if config.include_docs {
             if let Some(desc) = &operation.description {
-                let _ = writeln!(output, "/// {desc}");
+                let _ = writeln!(output, "/// Handler for: {desc}");
             } else if let Some(summary) = &operation.summary {
-                let _ = writeln!(output, "/// {summary}");
+                let _ = writeln!(output, "/// Handler for: {summary}");
+            }
+            if let Some(ref method) = operation.method {
+                if let Some(ref path) = operation.path {
+                    let _ = writeln!(output, "///");
+                    let _ = writeln!(output, "/// {method:?} {path}");
+                }
             }
         }
 
         let trait_name = format!("{}Handler", heck::AsUpperCamelCase(op_id));
-        let request_type = Self::infer_request_type(operation);
-        let response_type = Self::infer_response_type(operation);
+        let type_prefix = heck::AsUpperCamelCase(op_id).to_string();
+        let request_type = format!("{type_prefix}Request");
+        let response_type = format!("{type_prefix}Response");
 
+        // Get the service name from the parent - we'll use a generic error for now
+        // since we don't have access to the contract here
         output.push_str("#[async_trait]\n");
         let _ = writeln!(output, "pub trait {trait_name}: Send + Sync + 'static {{");
-        output.push_str("    /// Handles the request.\n");
+        output.push_str("    /// Handles the request with context.\n");
+        let _ = writeln!(output, "    ///");
+        let _ = writeln!(output, "    /// # Arguments");
+        let _ = writeln!(output, "    ///");
         let _ = writeln!(
             output,
-            "    async fn handle(\n        &self,\n        request: {request_type},\n    ) -> Result<{response_type}, Box<dyn std::error::Error + Send + Sync>>;"
+            "    /// * `ctx` - Request context containing metadata, headers, and auth info"
+        );
+        let _ = writeln!(
+            output,
+            "    /// * `request` - The typed request parameters and body"
+        );
+        let _ = writeln!(output, "    ///");
+        let _ = writeln!(output, "    /// # Returns");
+        let _ = writeln!(output, "    ///");
+        let _ = writeln!(output, "    /// The typed response or a service error");
+        let _ = writeln!(
+            output,
+            "    async fn handle(\n        &self,\n        ctx: &RequestContext,\n        request: {request_type},\n    ) -> Result<{response_type}, Box<dyn std::error::Error + Send + Sync>>;"
         );
         output.push_str("}\n");
 
@@ -157,42 +565,6 @@ impl RustGenerator {
             contract.version,
             chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ")
         )
-    }
-
-    /// Infers the request type for an operation.
-    fn infer_request_type(operation: &themis_core::Operation) -> String {
-        // Look for request body schema
-        if let Some(ref body) = operation.request_body {
-            if let Some(content) = body.content.get("application/json") {
-                let schema = &content.schema;
-                if let themis_core::Schema::Ref(r) = schema {
-                    let name = r.reference.rsplit('/').next().unwrap_or("Request");
-                    return name.to_string();
-                }
-            }
-        }
-
-        // Default to a unit struct
-        format!("{}Request", heck::AsUpperCamelCase(&operation.operation_id))
-    }
-
-    /// Infers the response type for an operation.
-    fn infer_response_type(operation: &themis_core::Operation) -> String {
-        // Look for 200/201 response schema
-        for status in ["200", "201", "202"] {
-            if let Some(response) = operation.responses.get(status) {
-                if let Some(content) = response.content.get("application/json") {
-                    let schema = &content.schema;
-                    if let themis_core::Schema::Ref(r) = schema {
-                        let name = r.reference.rsplit('/').next().unwrap_or("Response");
-                        return name.to_string();
-                    }
-                }
-            }
-        }
-
-        // Default to unit type
-        "()".to_string()
     }
 
     /// Gets the service name from the contract.
@@ -305,6 +677,76 @@ mod tests {
         contract
     }
 
+    fn create_contract_with_parameters() -> Contract {
+        let mut contract = Contract::new(
+            ContractFormat::OpenApi,
+            Version::new(1, 0, 0),
+            "user-service",
+        );
+
+        // Add User schema
+        contract.schemas.insert(
+            "User".to_string(),
+            Schema::Object(ObjectSchema {
+                properties: {
+                    let mut props = HashMap::new();
+                    props.insert(
+                        "id".to_string(),
+                        Schema::String(StringSchema {
+                            format: Some("uuid".to_string()),
+                            ..Default::default()
+                        }),
+                    );
+                    props.insert("name".to_string(), Schema::String(StringSchema::default()));
+                    props
+                },
+                required: vec!["id".to_string()],
+                ..Default::default()
+            }),
+        );
+
+        // Add operation with path and query parameters
+        let mut op = Operation::new("listUsers");
+        op.method = Some(HttpMethod::Get);
+        op.path = Some("/organizations/{orgId}/users".to_string());
+        op.summary = Some("List users in organization".to_string());
+
+        // Add path parameter
+        op.parameters.push(themis_core::operation::Parameter {
+            name: "orgId".to_string(),
+            location: ParameterLocation::Path,
+            description: Some("Organization ID".to_string()),
+            required: true,
+            deprecated: false,
+            schema: Schema::String(StringSchema {
+                format: Some("uuid".to_string()),
+                ..Default::default()
+            }),
+        });
+
+        // Add query parameters
+        op.parameters.push(themis_core::operation::Parameter {
+            name: "page".to_string(),
+            location: ParameterLocation::Query,
+            description: Some("Page number".to_string()),
+            required: false,
+            deprecated: false,
+            schema: Schema::Integer(themis_core::schema::IntegerSchema::default()),
+        });
+
+        op.parameters.push(themis_core::operation::Parameter {
+            name: "limit".to_string(),
+            location: ParameterLocation::Query,
+            description: Some("Results per page".to_string()),
+            required: true,
+            deprecated: false,
+            schema: Schema::Integer(themis_core::schema::IntegerSchema::default()),
+        });
+
+        contract.operations.insert("listUsers".to_string(), op);
+        contract
+    }
+
     #[test]
     fn test_rust_generator_creates_files() {
         let generator = RustGenerator::with_defaults();
@@ -345,6 +787,91 @@ mod tests {
     }
 
     #[test]
+    fn test_rust_generator_generates_request_context() {
+        let generator = RustGenerator::with_defaults();
+        let contract = create_test_contract();
+
+        let result = generator.generate(&contract).unwrap();
+        let handlers_file = result.get_file("handlers.rs").unwrap();
+
+        assert!(handlers_file.content.contains("pub struct RequestContext"));
+        assert!(handlers_file.content.contains("pub request_id: String"));
+        assert!(handlers_file
+            .content
+            .contains("pub user_id: Option<String>"));
+        assert!(handlers_file
+            .content
+            .contains("pub headers: std::collections::HashMap<String, String>"));
+    }
+
+    #[test]
+    fn test_rust_generator_generates_error_types() {
+        let generator = RustGenerator::with_defaults();
+        let contract = create_test_contract();
+
+        let result = generator.generate(&contract).unwrap();
+        let handlers_file = result.get_file("handlers.rs").unwrap();
+
+        assert!(handlers_file.content.contains("pub enum TestServiceError"));
+        assert!(handlers_file.content.contains("BadRequest(String)"));
+        assert!(handlers_file.content.contains("NotFound(String)"));
+        assert!(handlers_file.content.contains("Internal(String)"));
+        assert!(handlers_file
+            .content
+            .contains("fn status_code(&self) -> u16"));
+    }
+
+    #[test]
+    fn test_rust_generator_generates_request_types() {
+        let generator = RustGenerator::with_defaults();
+        let contract = create_test_contract();
+
+        let result = generator.generate(&contract).unwrap();
+        let handlers_file = result.get_file("handlers.rs").unwrap();
+
+        // Should generate GetUserRequest struct
+        assert!(handlers_file.content.contains("pub struct GetUserRequest"));
+    }
+
+    #[test]
+    fn test_rust_generator_generates_response_types() {
+        let generator = RustGenerator::with_defaults();
+        let contract = create_test_contract();
+
+        let result = generator.generate(&contract).unwrap();
+        let handlers_file = result.get_file("handlers.rs").unwrap();
+
+        // Should generate GetUserResponse enum
+        assert!(handlers_file.content.contains("pub enum GetUserResponse"));
+    }
+
+    #[test]
+    fn test_rust_generator_handler_uses_request_context() {
+        let generator = RustGenerator::with_defaults();
+        let contract = create_test_contract();
+
+        let result = generator.generate(&contract).unwrap();
+        let handlers_file = result.get_file("handlers.rs").unwrap();
+
+        // Handler should accept RequestContext parameter
+        assert!(handlers_file.content.contains("ctx: &RequestContext"));
+    }
+
+    #[test]
+    fn test_rust_generator_generates_service_struct() {
+        let generator = RustGenerator::with_defaults();
+        let contract = create_test_contract();
+
+        let result = generator.generate(&contract).unwrap();
+        let handlers_file = result.get_file("handlers.rs").unwrap();
+
+        assert!(handlers_file
+            .content
+            .contains("pub struct TestServiceService"));
+        assert!(handlers_file.content.contains("GetUser: GetUserHandler"));
+    }
+
+    #[test]
     fn test_rust_generator_mod_file() {
         let generator = RustGenerator::with_defaults();
         let contract = create_test_contract();
@@ -370,5 +897,48 @@ mod tests {
         let generator = RustGenerator::with_defaults();
         assert_eq!(generator.language_name(), "Rust");
         assert_eq!(generator.file_extension(), "rs");
+    }
+
+    #[test]
+    fn test_rust_generator_with_path_parameters() {
+        let generator = RustGenerator::with_defaults();
+        let contract = create_contract_with_parameters();
+
+        let result = generator.generate(&contract).unwrap();
+        let handlers_file = result.get_file("handlers.rs").unwrap();
+
+        // Should have path parameter in request struct
+        assert!(handlers_file
+            .content
+            .contains("pub struct ListUsersRequest"));
+        assert!(handlers_file.content.contains("pub org_id: uuid::Uuid"));
+    }
+
+    #[test]
+    fn test_rust_generator_with_query_parameters() {
+        let generator = RustGenerator::with_defaults();
+        let contract = create_contract_with_parameters();
+
+        let result = generator.generate(&contract).unwrap();
+        let handlers_file = result.get_file("handlers.rs").unwrap();
+
+        // Required query param should not be Option
+        assert!(handlers_file.content.contains("pub limit: i64"));
+        // Optional query param should be Option
+        assert!(handlers_file.content.contains("pub page: Option<i64>"));
+    }
+
+    #[test]
+    fn test_rust_generator_request_has_serde_derives() {
+        let generator = RustGenerator::with_defaults();
+        let contract = create_contract_with_parameters();
+
+        let result = generator.generate(&contract).unwrap();
+        let handlers_file = result.get_file("handlers.rs").unwrap();
+
+        // Request types should have serde derives
+        assert!(handlers_file
+            .content
+            .contains("serde::Serialize, serde::Deserialize"));
     }
 }

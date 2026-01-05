@@ -248,9 +248,10 @@ themis-platform/
   > **Completed 2026-01-06**: Supports oneOf, allOf, anyOf composition schemas
 - [x] Add serde derives
   > **Completed 2026-01-06**: Adds Serialize, Deserialize, rename_all, skip_serializing_if
-- [ ] Generate validation derives
+- [x] Generate validation derives
+  > **Completed 2026-01-06**: Maps OpenAPI constraints to validator crate attributes (length, range, email, url, regex)
 - [x] Test generated code compiles
-  > **Completed 2026-01-06**: 24 tests covering all type generation scenarios
+  > **Completed 2026-01-06**: 30 tests covering all type generation and validation scenarios
 
 ### Week 8: Rust Handlers & CLI
 
