@@ -1,8 +1,8 @@
 # Themis – Development Roadmap
 
-> **Version**: 1.9.0  
+> **Version**: 1.10.0  
 > **Created**: 2026-01-04  
-> **Last Updated**: 2026-01-06  
+> **Last Updated**: 2026-01-05  
 > **Target Completion**: Week 14 (MVP)
 > **Current Progress**: Phase T3 Complete (Week 10 Complete)
 
@@ -41,6 +41,28 @@
 ✅ JSON round-trip tests pass in each component
 □ Control plane crate skeleton exists in Eunomia (Week 13)
 ```
+
+---
+
+## 🔄 themis-platform-types v0.2.1 Production Readiness (Coming Soon)
+
+> **When**: Before production release
+> **Status**: Development Complete - Pending Publish
+
+### New Production Guarantees (v0.2.1)
+
+1. **Thread Safety** - Compile-time `Send + Sync` assertions for all public types
+2. **MSRV Testing** - CI validates Rust 1.75 compatibility
+3. **Schema Validation** - CI validates JSON schemas match Rust types
+4. **Serialization Testing** - Proptest roundtrip tests for all types
+5. **Fallible Constructor** - `RequestId::try_new()` for sandboxed environments
+6. **Security Lint** - `#[must_use = "security bug"]` on `PolicyDecision::allow/deny`
+
+### Upgrade Path (v0.2.0 → v0.2.1)
+
+- No breaking changes
+- Update `Cargo.toml` version when published
+- Optionally use `RequestId::try_new()` for extra safety
 
 ---
 
