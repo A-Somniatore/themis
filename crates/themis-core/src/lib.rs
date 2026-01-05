@@ -47,6 +47,14 @@ pub use schema::Schema;
 pub use version::Version;
 
 // Re-export shared platform types for convenience
+// These types are shared across Themis, Archimedes, and Eunomia
 pub use themis_platform_types::{
-    ErrorCode, FieldError, RequestId, SemanticVersion, ThemisErrorEnvelope,
+    // Identity types
+    CallerIdentity,
+    // Error types
+    ErrorCode, FieldError, ThemisErrorEnvelope,
+    // Request types
+    RequestId,
+    // Version types
+    SemanticVersion,
 };

@@ -1,10 +1,49 @@
 # Themis – Development Roadmap
 
-> **Version**: 1.5.0  
+> **Version**: 1.6.0  
 > **Created**: 2026-01-04  
 > **Last Updated**: 2026-01-06  
 > **Target Completion**: Week 14 (MVP)
 > **Current Progress**: Phase T3 In Progress (Week 8 Complete)
+
+---
+
+## 🔴 CTO Architecture Review Action Items (Priority)
+
+> **Source**: [2026-01-04 CTO Architecture Review](../../docs/reviews/2026-01-04-cto-architecture-review.md)
+> **Status**: ⚠️ NOT READY FOR SIGN-OFF - Type unification required
+
+### Critical Issues (Themis Actions)
+
+1. **JSON Schema vs Rust Implementation Mismatch** - themis-platform-types
+   - [ ] Align `caller-identity.schema.json` with Rust `identity.rs`:
+     - SpiffeIdentity: `trust_domain` is required in JSON but optional in Rust
+     - UserIdentity: JSON has `metadata`, Rust has `name` and `tenant_id`
+     - ApiKeyIdentity: JSON uses `owner`, Rust uses `owner_id` and `name`
+   - [ ] Add JSON round-trip tests to themis-platform-types
+   - [ ] Regenerate JSON schemas from Rust types (use `schemars` feature)
+
+2. **Cross-Component Integration Tests**
+   - [ ] Add serialization tests in themis-core that verify CallerIdentity JSON format
+   - [ ] Add PolicyInput serialization tests
+   - [ ] Add ThemisErrorEnvelope serialization tests
+
+3. **Documentation Updates**
+   - [ ] Update integration-spec.md to reference themis-platform-types as source of truth
+   - [ ] Document the canonical schema decisions
+
+### Sign-Off Blockers (All Components)
+
+```markdown
+□ All Cargo.toml files reference themis-platform-types
+□ Zero local CallerIdentity/PolicyInput definitions in Archimedes/Eunomia
+□ cargo test passes across all workspaces
+□ JSON round-trip tests pass in each component
+□ Control plane crate skeleton exists in Eunomia
+```
+
+> **Note**: Themis already correctly uses themis-platform-types. The CTO concerns
+> primarily affect Archimedes and Eunomia which have local duplicate definitions.
 
 ---
 

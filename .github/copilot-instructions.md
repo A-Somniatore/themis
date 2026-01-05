@@ -4,6 +4,25 @@
 
 **Themis** is the contract and schema governance system for the Themis Platform. It provides contract-first API development, schema validation, compatibility checking, and code generation for multiple languages.
 
+## CRITICAL: Review Design Docs Before Any Change
+
+**Before implementing ANY feature or making ANY code change, you MUST:**
+
+1. **Review `docs/roadmap.md`** – Check current phase, priorities, and what's already done
+2. **Review `docs/design.md`** – Understand the architecture and expected interfaces
+3. **Review `docs/spec.md`** – Check constraints and validation rules
+4. **Check `themis-platform-types`** – Ensure shared types are used correctly
+
+**This is non-negotiable.** Do not write code without first understanding the design context.
+
+### Design Review Checklist
+
+- [ ] Is this feature in the current phase of the roadmap?
+- [ ] Does the design doc specify the expected interface?
+- [ ] Are there shared types from `themis-platform-types` that should be used?
+- [ ] Does this change affect integration with Archimedes or Eunomia?
+- [ ] Are there breaking change concerns?
+
 ## Technology Stack
 
 | Area          | Technology                 |
