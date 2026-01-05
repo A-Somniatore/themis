@@ -10,8 +10,9 @@
 //! - `themis codegen` - Generate code from contracts
 //! - `themis pack` - Create artifact from contract
 //! - `themis inspect` - Inspect an artifact
-//! - `themis publish` - Publish artifact to registry (future)
-//! - `themis fetch` - Fetch artifact from registry (future)
+//! - `themis publish` - Publish artifact to registry
+//! - `themis fetch` - Fetch artifact from registry
+//! - `themis versions` - List versions of a service
 
 use clap::{Parser, Subcommand};
 use tracing_subscriber::EnvFilter;
@@ -50,6 +51,15 @@ enum Commands {
 
     /// Inspect an artifact
     Inspect(commands::pack::InspectArgs),
+
+    /// Publish an artifact to the registry
+    Publish(commands::registry::PublishArgs),
+
+    /// Fetch an artifact from the registry
+    Fetch(commands::registry::FetchArgs),
+
+    /// List versions of a service in the registry
+    Versions(commands::registry::ListVersionsArgs),
 }
 
 fn main() -> anyhow::Result<()> {
@@ -67,5 +77,8 @@ fn main() -> anyhow::Result<()> {
         Commands::Codegen(args) => commands::codegen::run(&args),
         Commands::Pack(args) => commands::pack::run(&args),
         Commands::Inspect(args) => commands::pack::run_inspect(&args),
+        Commands::Publish(args) => commands::registry::run_publish(&args),
+        Commands::Fetch(args) => commands::registry::run_fetch(&args),
+        Commands::Versions(args) => commands::registry::run_list_versions(&args),
     }
 }

@@ -1,10 +1,10 @@
 # Themis – Development Roadmap
 
-> **Version**: 1.10.0  
+> **Version**: 1.11.0  
 > **Created**: 2026-01-04  
 > **Last Updated**: 2026-01-06  
 > **Target Completion**: Week 14 (MVP)
-> **Current Progress**: Phase T4 In Progress (Week 11 In Progress)
+> **Current Progress**: Phase T4 Complete (Week 12 Complete)
 
 ---
 
@@ -420,21 +420,30 @@ themis-platform/
   > **Completed 2026-01-06**: verify_checksum() method with ArtifactError on mismatch
 - [x] Add artifact versioning
   > **Completed 2026-01-06**: Artifacts include $schema URL and format version
-- [ ] Add `themis pack` CLI command
-- [ ] Add 23 artifact tests
+- [x] Add `themis pack` CLI command
+  > **Completed 2026-01-06**: Pack and inspect commands for creating and viewing artifacts
+- [x] Add 23 artifact tests
+  > **Completed 2026-01-06**: Full test coverage for artifact, builder, operation, and error types
 
 ### Week 12: Registry Client
 
-- [ ] Create `themis-registry` crate
-- [ ] Implement OCI registry client
-- [ ] Add `themis publish` command
-- [ ] Add `themis fetch` command
-- [ ] Implement caching
-- [ ] Test registry operations
+- [x] Create `themis-registry` crate
+  > **Completed 2026-01-06**: Created crate with OCI registry support
+- [x] Implement OCI registry client
+  > **Completed 2026-01-06**: RegistryClient with publish, fetch, exists, list_versions, delete
+- [x] Add `themis publish` command
+  > **Completed 2026-01-06**: Publish command with verification, skip-existing, token auth
+- [x] Add `themis fetch` command
+  > **Completed 2026-01-06**: Fetch command with caching, latest version support
+- [x] Implement caching
+  > **Completed 2026-01-06**: ArtifactCache with disk-based caching by namespace/service/version
+- [x] Test registry operations
+  > **Completed 2026-01-06**: 54 tests for client, cache, config, reference, OCI types
 
-### Phase T4 Milestone
+### Phase T4 Milestone ✅
 
 **Criteria**: Artifacts can be published to and fetched from registry
+**Status**: COMPLETE - All registry commands implemented
 
 ---
 

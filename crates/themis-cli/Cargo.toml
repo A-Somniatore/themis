@@ -18,6 +18,7 @@ themis-lint = { workspace = true }
 themis-compat = { path = "../themis-compat" }
 themis-codegen = { path = "../themis-codegen" }
 themis-artifact = { workspace = true }
+themis-registry = { path = "../themis-registry" }
 clap = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

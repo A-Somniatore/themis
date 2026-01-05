@@ -1742,6 +1742,7 @@ dependencies = [
  "themis-core",
  "themis-lint",
  "themis-openapi",
+ "themis-registry",
  "tokio",
  "tracing",
  "tracing-subscriber",

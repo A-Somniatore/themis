@@ -108,11 +108,17 @@ impl ArtifactReference {
         };
 
         // Split off tag if no digest
+        // The tag is after the last colon, but only if it's not part of a port
         let (name_part, tag) = if digest.is_none() {
             if let Some(colon_pos) = name_part.rfind(':') {
-                // Make sure this colon isn't part of a port number
                 let after_colon = &name_part[colon_pos + 1..];
-                if after_colon.chars().all(|c| c.is_ascii_digit()) {
+                // If after colon is all digits, it could be a port - but only if there's no slash after
+                // e.g., "localhost:5000/service" - the 5000 is a port
+                // e.g., "localhost:5000/service:1.0.0" - the 1.0.0 is a tag
+                let is_port = after_colon.chars().all(|c| c.is_ascii_digit())
+                    && !name_part[..colon_pos].contains('/');
+
+                if is_port {
                     (name_part, None)
                 } else {
                     let (name, tag) = name_part.split_at(colon_pos);
@@ -128,10 +134,16 @@ impl ArtifactReference {
         // Parse the name part into registry/namespace/service
         let parts: Vec<&str> = name_part.split('/').collect();
 
-        let (registry, namespace, service) = match parts.len() {
-            1 => (None, None, parts[0].to_string()),
-            2 => (None, Some(parts[0].to_string()), parts[1].to_string()),
-            3 => (
+        // Determine if first part is a registry (contains . or :)
+        let first_is_registry = parts
+            .first()
+            .map_or(false, |p| p.contains('.') || p.contains(':'));
+
+        let (registry, namespace, service) = match (parts.len(), first_is_registry) {
+            (1, _) => (None, None, parts[0].to_string()),
+            (2, true) => (Some(parts[0].to_string()), None, parts[1].to_string()),
+            (2, false) => (None, Some(parts[0].to_string()), parts[1].to_string()),
+            (3, _) => (
                 Some(parts[0].to_string()),
                 Some(parts[1].to_string()),
                 parts[2].to_string(),
