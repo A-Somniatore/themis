@@ -204,48 +204,46 @@ fn convert_path_item_to_operations(
         })
         .collect();
 
+    // Helper to insert operation and check for duplicates
+    let mut insert_operation = |operation: Operation| -> ThemisResult<()> {
+        let op_id = operation.operation_id.clone();
+        if contract.operations.contains_key(&op_id) {
+            return Err(ThemisError::SchemaValidation {
+                message: format!("Duplicate operationId '{op_id}' found"),
+            });
+        }
+        contract.operations.insert(op_id, operation);
+        Ok(())
+    };
+
     // Convert each HTTP method
     if let Some(op) = &path_item.get {
         let operation = convert_operation(op, path, HttpMethod::Get, &common_params)?;
-        contract
-            .operations
-            .insert(operation.operation_id.clone(), operation);
+        insert_operation(operation)?;
     }
     if let Some(op) = &path_item.post {
         let operation = convert_operation(op, path, HttpMethod::Post, &common_params)?;
-        contract
-            .operations
-            .insert(operation.operation_id.clone(), operation);
+        insert_operation(operation)?;
     }
     if let Some(op) = &path_item.put {
         let operation = convert_operation(op, path, HttpMethod::Put, &common_params)?;
-        contract
-            .operations
-            .insert(operation.operation_id.clone(), operation);
+        insert_operation(operation)?;
     }
     if let Some(op) = &path_item.patch {
         let operation = convert_operation(op, path, HttpMethod::Patch, &common_params)?;
-        contract
-            .operations
-            .insert(operation.operation_id.clone(), operation);
+        insert_operation(operation)?;
     }
     if let Some(op) = &path_item.delete {
         let operation = convert_operation(op, path, HttpMethod::Delete, &common_params)?;
-        contract
-            .operations
-            .insert(operation.operation_id.clone(), operation);
+        insert_operation(operation)?;
     }
     if let Some(op) = &path_item.head {
         let operation = convert_operation(op, path, HttpMethod::Head, &common_params)?;
-        contract
-            .operations
-            .insert(operation.operation_id.clone(), operation);
+        insert_operation(operation)?;
     }
     if let Some(op) = &path_item.options {
         let operation = convert_operation(op, path, HttpMethod::Options, &common_params)?;
-        contract
-            .operations
-            .insert(operation.operation_id.clone(), operation);
+        insert_operation(operation)?;
     }
 
     Ok(())
