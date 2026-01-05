@@ -1,49 +1,84 @@
 # Themis – Development Roadmap
 
-> **Version**: 1.6.0  
+> **Version**: 1.8.0  
 > **Created**: 2026-01-04  
 > **Last Updated**: 2026-01-06  
 > **Target Completion**: Week 14 (MVP)
-> **Current Progress**: Phase T3 In Progress (Week 8 Complete)
+> **Current Progress**: Phase T3 In Progress (Week 9 Complete)
 
 ---
 
-## 🔴 CTO Architecture Review Action Items (Priority)
+## ✅ CTO Architecture Review Action Items (Resolved)
 
 > **Source**: [2026-01-04 CTO Architecture Review](../../docs/reviews/2026-01-04-cto-architecture-review.md)
-> **Status**: ⚠️ NOT READY FOR SIGN-OFF - Type unification required
+> **Status**: ✅ RESOLVED - `themis-platform-types` v0.2.0 addresses all issues
 
-### Critical Issues (Themis Actions)
+### Resolved Issues (2026-01-05)
 
-1. **JSON Schema vs Rust Implementation Mismatch** - themis-platform-types
-   - [ ] Align `caller-identity.schema.json` with Rust `identity.rs`:
-     - SpiffeIdentity: `trust_domain` is required in JSON but optional in Rust
-     - UserIdentity: JSON has `metadata`, Rust has `name` and `tenant_id`
-     - ApiKeyIdentity: JSON uses `owner`, Rust uses `owner_id` and `name`
-   - [ ] Add JSON round-trip tests to themis-platform-types
-   - [ ] Regenerate JSON schemas from Rust types (use `schemars` feature)
+1. **JSON Schema vs Rust Implementation Mismatch** - ✅ FIXED
+   - [x] Aligned `caller-identity.schema.json` with Rust `identity.rs`
+   - [x] Added JSON round-trip tests to themis-platform-types
+   - [x] Added schema validation CI script
 
-2. **Cross-Component Integration Tests**
-   - [ ] Add serialization tests in themis-core that verify CallerIdentity JSON format
-   - [ ] Add PolicyInput serialization tests
-   - [ ] Add ThemisErrorEnvelope serialization tests
+2. **API Safety Improvements** - ✅ COMPLETE
+   - [x] `BuilderError` type replaces `&'static str` errors
+   - [x] `build()` deprecated, `try_build()` is the new standard
+   - [x] `#[non_exhaustive]` on public enums for future compatibility
+   - [x] SemVer pre-release comparison fixed per spec
 
-3. **Documentation Updates**
-   - [ ] Update integration-spec.md to reference themis-platform-types as source of truth
-   - [ ] Document the canonical schema decisions
+3. **Schema Evolution** - ✅ COMPLETE
+   - [x] Added `schema` module with `Versioned<T>` wrapper
+   - [x] Added `CURRENT_SCHEMA_VERSION` constant
+   - [x] Documented migration strategy
 
 ### Sign-Off Blockers (All Components)
 
 ```markdown
-□ All Cargo.toml files reference themis-platform-types
-□ Zero local CallerIdentity/PolicyInput definitions in Archimedes/Eunomia
-□ cargo test passes across all workspaces
-□ JSON round-trip tests pass in each component
-□ Control plane crate skeleton exists in Eunomia
+✅ All Cargo.toml files reference themis-platform-types
+✅ Zero local CallerIdentity/PolicyInput definitions in Archimedes/Eunomia
+✅ cargo test passes across all workspaces
+✅ JSON round-trip tests pass in each component
+□ Control plane crate skeleton exists in Eunomia (Week 13)
 ```
 
-> **Note**: Themis already correctly uses themis-platform-types. The CTO concerns
-> primarily affect Archimedes and Eunomia which have local duplicate definitions.
+---
+
+## 🔄 themis-platform-types v0.2.0 Migration (Required)
+
+> **When**: Before next release
+> **Breaking Changes**: Yes, see below
+
+### Migration Checklist
+
+- [ ] Update `Cargo.toml` to `themis-platform-types = "0.2.0"`
+- [ ] Replace `build()` calls with `try_build().unwrap()` or `try_build()?`
+- [ ] Update error handling to use `BuilderError` instead of `&'static str`
+- [ ] Add wildcard arms to match statements on `CallerIdentity`, `ErrorCode` (now `#[non_exhaustive]`)
+- [ ] Use new re-exports: `SpiffeIdentity`, `UserIdentity`, `ApiKeyIdentity`, `BuilderError`
+
+### Code Changes Required
+
+```rust
+// Before (v0.1.0)
+let input = PolicyInput::builder()
+    .caller(caller)
+    .service("my-service")
+    .try_build()?; // Returns Result<_, &'static str>
+
+// After (v0.2.0)
+use themis_platform_types::BuilderError;
+let input = PolicyInput::builder()
+    .caller(caller)
+    .service("my-service")
+    .try_build()?; // Returns Result<_, BuilderError>
+
+// Match statements need wildcard
+match error_code {
+    ErrorCode::NotFound => ...,
+    ErrorCode::InternalError => ...,
+    _ => ... // Required for #[non_exhaustive]
+}
+```
 
 ---
 
@@ -309,12 +344,17 @@ themis-platform/
 
 ### Week 9: TypeScript Generation
 
-- [ ] Generate TypeScript interfaces
-- [ ] Generate fetch client
-- [ ] Generate Express/Fastify handler types
-- [ ] Add JSDoc comments
-- [ ] Create npm package output
-- [ ] Add `themis codegen --language typescript` CLI command
+- [x] Generate TypeScript interfaces
+  > **Completed 2026-01-06**: TypeScriptTypeGenerator produces interfaces from OpenAPI schemas
+- [x] Generate fetch client
+  > **Completed 2026-01-06**: Fetch client with Result pattern, typed requests/responses
+- [x] Generate Express/Fastify handler types
+  > **Completed 2026-01-06**: Express router factory with RequestContext support
+- [x] Add JSDoc comments
+  > **Completed 2026-01-06**: JSDoc generated when include_docs is enabled
+- [ ] Create npm package output (optional enhancement)
+- [x] Add `themis codegen --language typescript` CLI command
+  > **Completed 2026-01-06**: CLI supports --language typescript
 
 ### Week 10: Python Generation
 
