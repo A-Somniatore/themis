@@ -171,16 +171,23 @@ themis-platform/
 
 ### Week 4: Contract Validation
 
-- [ ] Implement schema validation
-- [ ] Check required operationId on all operations
-- [ ] Validate error response declarations
-- [ ] Check security scheme declarations
-- [ ] Implement custom rule framework
-- [ ] Add `themis validate` CLI command
+- [x] Implement schema validation
+  > **Completed 2026-01-05**: Response schema validation (THEMIS009), checks 2xx responses have content
+- [x] Check required operationId on all operations
+  > **Completed 2026-01-04**: Parser rejects specs without operationId (ThemisError::MissingField)
+- [x] Validate error response declarations
+  > **Completed 2026-01-05**: Warns for missing 4xx/5xx responses (THEMIS004), 401 for secured ops
+- [x] Check security scheme declarations
+  > **Completed 2026-01-05**: Errors for undefined schemes (THEMIS003), warns for no security (THEMIS008)
+- [x] Implement custom rule framework
+  > **Completed 2026-01-05**: Rule codes THEMIS001-THEMIS009, ValidationResult with errors/warnings
+- [x] Add `themis validate` CLI command
+  > **Completed 2026-01-05**: Supports text/JSON output, --warnings-as-errors flag
 
 ### Phase T1 Milestone
 
 **Criteria**: OpenAPI specs can be parsed, validated, and loaded
+> **✅ COMPLETE 2026-01-05**: All Week 4 validation features implemented. 50 tests passing.
 
 ---
 

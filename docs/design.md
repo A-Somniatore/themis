@@ -1427,6 +1427,42 @@ rules:
     enabled: true
 ```
 
+### 8.3 Validation Rules (Implemented)
+
+Themis enforces the following validation rules for OpenAPI contracts:
+
+#### Required Rules (Errors)
+
+| Rule Code   | Rule Name                  | Description                                    |
+| ----------- | -------------------------- | ---------------------------------------------- |
+| `THEMIS001` | Missing Operation ID       | Every operation MUST have an `operationId`     |
+| `THEMIS002` | Duplicate Operation ID     | `operationId` MUST be unique across operations |
+| `THEMIS003` | Undefined Security Scheme  | Referenced security schemes MUST be defined    |
+| `THEMIS007` | Invalid Version            | API version MUST be valid semantic version     |
+
+#### Recommended Rules (Warnings)
+
+| Rule Code   | Rule Name                     | Description                                                |
+| ----------- | ----------------------------- | ---------------------------------------------------------- |
+| `THEMIS004` | Missing Error Responses       | Operations SHOULD declare error responses (4xx/5xx)        |
+| `THEMIS005` | Missing Operation Description | Operations SHOULD have descriptions                        |
+| `THEMIS006` | Missing Schema Description    | Schemas SHOULD have descriptions                           |
+| `THEMIS008` | No Security Defined           | Operations SHOULD have security requirements               |
+| `THEMIS009` | Missing Response Schema       | Success responses (2xx except 204) SHOULD have schemas     |
+
+#### CLI Usage
+
+```bash
+# Validate a contract
+themis validate api.yaml
+
+# JSON output for CI integration
+themis validate --format json api.yaml
+
+# Treat warnings as errors (strict mode)
+themis validate --warnings-as-errors api.yaml
+```
+
 ---
 
 ## 9. Code Generation
