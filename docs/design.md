@@ -1463,6 +1463,32 @@ themis validate --format json api.yaml
 themis validate --warnings-as-errors api.yaml
 ```
 
+### 8.4 Validation vs Linting
+
+Themis separates **validation** from **linting**:
+
+| Aspect       | Validation (`themis validate`)              | Linting (`themis lint`)                          |
+| ------------ | ------------------------------------------- | ------------------------------------------------ |
+| **Purpose**  | Ensure contract is structurally correct     | Enforce style conventions and best practices     |
+| **Blocking** | Errors block CI/deployment                  | Configurable (warnings or errors)                |
+| **Rules**    | Fixed rules (THEMIS001-009)                 | Configurable via `.themis-lint.yaml`             |
+| **Scope**    | Schema correctness, required fields         | Naming conventions, documentation, patterns      |
+
+**Validation** checks are mandatory and cannot be disabled. They ensure the contract is valid and can be processed.
+
+**Lint** rules are configurable and can be customized per project. They enforce team conventions and best practices.
+
+### 8.5 Lint Rules (Configurable)
+
+| Rule                       | Default  | Description                                      |
+| -------------------------- | -------- | ------------------------------------------------ |
+| `naming/operation-id`      | warn     | operationId should be camelCase                  |
+| `naming/path-format`       | warn     | Paths should be kebab-case                       |
+| `naming/schema-name`       | warn     | Schema names should be PascalCase                |
+| `docs/operation-summary`   | warn     | Operations should have summaries                 |
+| `security/require-auth`    | off      | All operations must have security (except allow list) |
+| `versioning/path-version`  | off      | Paths should include version prefix              |
+
 ---
 
 ## 9. Code Generation

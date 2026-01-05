@@ -193,22 +193,28 @@ themis-platform/
 
 ## Phase T2: Linting & Compatibility (Weeks 5-6)
 
-### Week 5: Linting & Compatibility
+### Week 5: Linting Rules
 
-- [ ] Implement naming convention checks
-- [ ] Add versioning rules
-- [ ] Implement schema comparison (diffing)
-- [ ] Detect added/removed fields
-- [ ] Detect type changes
+- [ ] Define lint rule trait and configuration
+- [ ] Implement naming convention checks:
+  - [ ] `naming/operation-id`: operationId should be camelCase
+  - [ ] `naming/path-format`: paths should be kebab-case
+  - [ ] `naming/schema-name`: schema names should be PascalCase
+- [ ] Implement documentation checks:
+  - [ ] `docs/operation-summary`: operations should have summaries
+- [ ] Add `.themis-lint.yaml` configuration support
 - [ ] Add `themis lint` CLI command
+- [ ] Add lint rule tests
 
 ### Week 6: Breaking Change Detection
 
+- [ ] Implement schema comparison (diffing)
+- [ ] Detect added/removed fields
+- [ ] Detect type changes
 - [ ] Define breaking change rules
 - [ ] Implement compatibility analyzer
 - [ ] Add semver validation
 - [ ] Generate compatibility report
-- [ ] Block breaking changes in minor/patch
 - [ ] Add `themis diff` CLI command
 
 ### Phase T2 Milestone
