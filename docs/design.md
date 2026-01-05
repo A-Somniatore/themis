@@ -2396,9 +2396,9 @@ async fn get_user_matches_contract() {
 - 🟡 **Deprecation workflow**: 90-day sunset period with warnings
 - 🟡 **Multi-service contracts**: One contract per service (shared schemas via $ref)
 
-### To Be Decided
+### Resolved (Post-Review)
 
-- 🔴 **Private vs public contracts**: Different visibility rules? (Design needed)
+- ✅ **Private vs public contracts**: All contracts are internal by default. Public contracts (external API) require explicit annotation (`x-themis-visibility: public`) and additional review. This is a governance concern, not a technical one — all contracts are validated the same way.
 
 ---
 
