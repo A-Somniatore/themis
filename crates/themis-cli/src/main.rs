@@ -7,7 +7,7 @@
 //! - `themis validate` - Validate contract syntax and schema
 //! - `themis lint` - Run linting rules
 //! - `themis diff` - Compare two contract versions
-//! - `themis codegen` - Generate code (future)
+//! - `themis codegen` - Generate code from contracts
 //! - `themis publish` - Publish artifact (future)
 //! - `themis fetch` - Fetch artifact (future)
 
@@ -39,6 +39,9 @@ enum Commands {
 
     /// Compare two contract versions
     Diff(commands::diff::DiffArgs),
+
+    /// Generate code from a contract
+    Codegen(commands::codegen::CodegenArgs),
 }
 
 fn main() -> anyhow::Result<()> {
@@ -53,5 +56,6 @@ fn main() -> anyhow::Result<()> {
         Commands::Validate(args) => commands::validate::run(&args),
         Commands::Lint(args) => commands::lint::run(&args),
         Commands::Diff(args) => commands::diff::run(&args),
+        Commands::Codegen(args) => commands::codegen::run(&args),
     }
 }

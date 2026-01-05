@@ -16,6 +16,7 @@ themis-core = { workspace = true }
 themis-openapi = { workspace = true }
 themis-lint = { workspace = true }
 themis-compat = { path = "../themis-compat" }
+themis-codegen = { path = "../themis-codegen" }
 clap = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

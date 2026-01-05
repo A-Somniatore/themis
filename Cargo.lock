@@ -750,6 +750,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml",
+ "themis-codegen",
  "themis-compat",
  "themis-core",
  "themis-lint",
