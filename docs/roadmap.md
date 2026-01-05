@@ -1,19 +1,20 @@
 # Themis – Development Roadmap
 
-> **Version**: 1.1.0  
+> **Version**: 1.2.0  
 > **Created**: 2026-01-04  
-> **Last Updated**: 2026-01-04  
+> **Last Updated**: 2026-01-05  
 > **Target Completion**: Week 14 (MVP)
 
 ---
 
 ## Key Decisions
 
-| Decision                                                                     | Impact                                 |
-| ---------------------------------------------------------------------------- | -------------------------------------- |
-| [ADR-006](../../docs/decisions/006-grpc-post-mvp.md)                         | MVP is OpenAPI 3.x only, gRPC post-MVP |
-| [ADR-005](../../docs/decisions/005-kubernetes-ingress-over-custom-router.md) | No custom router, use K8s Ingress      |
-| [ADR-007](../../docs/decisions/007-apache-2-license.md)                      | Apache 2.0 license                     |
+| Decision                                                                     | Impact                                              |
+| ---------------------------------------------------------------------------- | --------------------------------------------------- |
+| [ADR-008](../../docs/decisions/008-archimedes-full-framework.md)             | Archimedes is full framework replacement (40 weeks) |
+| [ADR-006](../../docs/decisions/006-grpc-post-mvp.md)                         | MVP is OpenAPI 3.x only, gRPC post-MVP              |
+| [ADR-005](../../docs/decisions/005-kubernetes-ingress-over-custom-router.md) | No custom router, use K8s Ingress                   |
+| [ADR-007](../../docs/decisions/007-apache-2-license.md)                      | Apache 2.0 license                                  |
 
 **MVP Contract Support:**
 
@@ -45,6 +46,7 @@ Themis is the contract governance toolchain for the Themis Platform. Development
 
 ### Cross-Component Timeline Alignment
 
+**MVP Timeline (Weeks 1-20):**
 ```
          Week: 1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20
  Themis:      [T0][---T1---][--T2--][------T3------][--T4--][--T5--]
@@ -52,12 +54,23 @@ Themis is the contract governance toolchain for the Themis Platform. Development
  Archimedes:  [A0][---A1---][----------A2----------][----------A3----------][A4][------A5------]
 ```
 
+**Full Framework Timeline (Weeks 21-40):**
+```
+         Week: 21  22  23  24  25  26  27  28  29  30  31  32  33  34  35  36  37  38  39  40
+ Archimedes:  [------A6------][------A7------][------A8------][------A9------][-----A10------]
+                  Router         FastAPI        WebSocket         CLI        Multi-Lang
+                Extractors       Parity          SSE/Tasks       DevExp       SDKs
+```
+
+> **Note**: Archimedes is evolving from a governance layer to a **full framework replacement** for Axum, FastAPI, and Boost.Beast. See [ADR-008](../../docs/decisions/008-archimedes-full-framework.md).
+
 **Key Coordination Points**:
 
 - Week 1: Themis creates `themis-platform-types` crate (all components depend on this)
 - Week 12: Themis artifacts available for Archimedes integration (T4 complete)
 - Week 14: Themis MVP complete, supporting Archimedes A5 integration
-- Weeks 17-20: Full platform integration (Themis team supports Archimedes/Eunomia)
+- Weeks 17-20: Platform MVP integration (Themis team supports Archimedes/Eunomia)
+- Weeks 37-40: Themis codegen updated to target Archimedes multi-language SDKs
 
 ---
 
@@ -153,7 +166,7 @@ themis-platform/
   > **Completed 2026-01-04**: Supports HTTP, ApiKey, OAuth2, OpenIdConnect security scheme types
 - [x] Test with sample OpenAPI specs
   > **Completed 2026-01-04**: 8 unit tests covering parsing, schema conversion, security schemes, extensions
-- [x] Support Themis extensions (x-themis-*)
+- [x] Support Themis extensions (x-themis-\*)
   > **Completed 2026-01-04**: Extracts x-themis-rate-limit-tier, x-themis-timeout-tier, x-themis-idempotent
 
 ### Week 4: Contract Validation
