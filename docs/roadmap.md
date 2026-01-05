@@ -1,9 +1,10 @@
 # Themis – Development Roadmap
 
-> **Version**: 1.2.0  
+> **Version**: 1.3.0  
 > **Created**: 2026-01-04  
 > **Last Updated**: 2026-01-05  
 > **Target Completion**: Week 14 (MVP)
+> **Current Progress**: Phase T2 Complete (Week 6)
 
 ---
 
@@ -208,20 +209,30 @@ themis-platform/
 - [x] Add `themis lint` CLI command
 - [x] Add lint rule tests (32 tests)
 
-### Week 6: Breaking Change Detection
+### Week 6: Breaking Change Detection ✅
 
-- [ ] Implement schema comparison (diffing)
-- [ ] Detect added/removed fields
-- [ ] Detect type changes
-- [ ] Define breaking change rules
-- [ ] Implement compatibility analyzer
-- [ ] Add semver validation
-- [ ] Generate compatibility report
-- [ ] Add `themis diff` CLI command
+- [x] Implement schema comparison (diffing)
+  > **Completed 2026-01-05**: Created themis-compat crate with diff_contracts() function
+- [x] Detect added/removed fields
+  > **Completed 2026-01-05**: Detects required/optional field additions and removals
+- [x] Detect type changes
+  > **Completed 2026-01-05**: Detects field type changes (BREAK006)
+- [x] Define breaking change rules
+  > **Completed 2026-01-05**: BREAK001-010, ADD001-006, MOD001-004 documented in design.md
+- [x] Implement compatibility analyzer
+  > **Completed 2026-01-05**: CompatibilityChecker with configurable validation
+- [x] Add semver validation
+  > **Completed 2026-01-05**: Validates version bump matches detected changes
+- [x] Generate compatibility report
+  > **Completed 2026-01-05**: CompatibilityReport with JSON/text output, suggested_bump
+- [x] Add `themis diff` CLI command
+  > **Completed 2026-01-05**: Supports --format text/json, --fail-on-breaking, --validate-version
+- [x] Add themis-compat tests (35 tests)
 
 ### Phase T2 Milestone
 
 **Criteria**: Breaking changes are detected, contracts can be linted
+> **✅ COMPLETE 2026-01-05**: All Week 5 & 6 features implemented. 116 tests total.
 
 ---
 
