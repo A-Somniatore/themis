@@ -15,6 +15,7 @@ path = "src/main.rs"
 themis-core = { workspace = true }
 themis-openapi = { workspace = true }
 themis-lint = { workspace = true }
+themis-compat = { path = "../themis-compat" }
 clap = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -23,6 +24,7 @@ anyhow = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 tokio = { workspace = true }
+semver = "1.0"
 
 [lints]
 workspace = true

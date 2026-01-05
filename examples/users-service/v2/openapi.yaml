@@ -1,0 +1,577 @@
+# Users Service API v2.0.0
+# This version introduces breaking changes for demonstration purposes
+#
+# BREAKING CHANGES from v1:
+# - Removed: deleteUser operation (BREAK001)
+# - Changed: User.age type from integer to string (BREAK006)
+# - Added required field: CreateUserRequest.phone_number (BREAK005)
+# - Removed: UpdateUserRequest schema (BREAK010)
+# - Removed enum value: UserStatus (if had) would be BREAK008
+#
+# ADDITIONS:
+# - Added: deactivateUser operation (ADD001)
+# - Added: User.phone_number optional field (ADD002)
+# - Added: UserPreferences schema (ADD006)
+# - Added: User.preferences optional field (ADD002)
+#
+# MODIFICATIONS:
+# - Changed: createUser description (MOD001)
+# - Changed: API summary (MOD002)
+
+openapi: "3.1.0"
+
+info:
+  title: Users Service API (Themis Platform)
+  version: 2.0.0
+  description: |
+    User management service for the Themis platform.
+    
+    **Version 2.0** - Major update with breaking changes.
+    Please refer to the migration guide before upgrading.
+  contact:
+    name: Platform Team
+    email: platform@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.themis.internal/v2
+    description: Production
+  - url: https://api.staging.themis.internal/v2
+    description: Staging
+
+# Security Schemes (same as v1)
+components:
+  securitySchemes:
+    spiffe:
+      type: http
+      scheme: mutual
+      description: Internal service-to-service authentication via SPIFFE (mTLS)
+
+    bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT bearer token for user authentication
+
+  schemas:
+    # Core User type - MODIFIED from v1
+    User:
+      type: object
+      required:
+        - id
+        - email
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique user identifier
+        email:
+          type: string
+          format: email
+          description: User's email address
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: User's display name
+        # BREAKING CHANGE: age was integer in v1, now string
+        age:
+          type: string
+          description: User's age as string (e.g., "25 years")
+        created_at:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        avatar_url:
+          type: string
+          format: uri
+          description: URL to user's avatar image
+        # ADDITION: new optional field
+        phone_number:
+          type: string
+          pattern: "^\\+[1-9]\\d{1,14}$"
+          description: User's phone number in E.164 format
+        # ADDITION: new optional field referencing new schema
+        preferences:
+          $ref: "#/components/schemas/UserPreferences"
+
+    # ADDITION: New schema
+    UserPreferences:
+      type: object
+      properties:
+        theme:
+          type: string
+          enum: [light, dark, auto]
+          default: auto
+        notifications_enabled:
+          type: boolean
+          default: true
+        language:
+          type: string
+          default: en
+
+    # CreateUserRequest - BREAKING CHANGE: added required field
+    CreateUserRequest:
+      type: object
+      required:
+        - email
+        - name
+        - phone_number  # BREAKING: was not required in v1
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address (must be unique)
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        avatar_url:
+          type: string
+          format: uri
+        # BREAKING CHANGE: required in v2
+        phone_number:
+          type: string
+          pattern: "^\\+[1-9]\\d{1,14}$"
+          description: User's phone number (required in v2)
+
+    # NOTE: UpdateUserRequest schema is REMOVED in v2 (BREAKING CHANGE)
+    # Clients should use PATCH with partial User object
+
+    # Paginated user list (unchanged)
+    UserList:
+      type: object
+      required:
+        - items
+        - total
+        - page
+        - per_page
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of users
+        page:
+          type: integer
+          minimum: 1
+          description: Current page number
+        per_page:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Items per page
+
+    # Standard Themis error base (unchanged)
+    ThemisError:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code
+        message:
+          type: string
+          description: Human-readable error message
+        request_id:
+          type: string
+          description: Request ID for tracing
+        trace_id:
+          type: string
+          description: Distributed trace ID
+        details:
+          type: object
+          additionalProperties: true
+          description: Additional error details
+
+    # Specific error types (unchanged)
+    UserNotFoundError:
+      allOf:
+        - $ref: "#/components/schemas/ThemisError"
+        - type: object
+          properties:
+            code:
+              const: USER_NOT_FOUND
+            details:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                  format: uuid
+
+    UserAlreadyExistsError:
+      allOf:
+        - $ref: "#/components/schemas/ThemisError"
+        - type: object
+          properties:
+            code:
+              const: USER_ALREADY_EXISTS
+            details:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+
+    ValidationError:
+      allOf:
+        - $ref: "#/components/schemas/ThemisError"
+        - type: object
+          properties:
+            code:
+              const: VALIDATION_ERROR
+            details:
+              type: object
+              properties:
+                field:
+                  type: string
+                reason:
+                  type: string
+
+    # ADDITION: New deactivation result schema
+    DeactivationResult:
+      type: object
+      required:
+        - user_id
+        - deactivated_at
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        deactivated_at:
+          type: string
+          format: date-time
+        reason:
+          type: string
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ThemisError"
+          example:
+            code: UNAUTHORIZED
+            message: Authentication required
+
+    Forbidden:
+      description: Authorization denied
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ThemisError"
+          example:
+            code: FORBIDDEN
+            message: You do not have permission to perform this action
+
+paths:
+  /users:
+    get:
+      operationId: listUsers
+      summary: List all users
+      description: Retrieve a paginated list of users
+      tags:
+        - Users
+
+      security:
+        - spiffe: []
+        - bearer: []
+
+      x-themis:
+        rate-limit-tier: standard
+        timeout-tier: fast
+        idempotent: true
+
+      parameters:
+        - name: page
+          in: query
+          description: Page number (1-indexed)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: search
+          in: query
+          description: Search users by name or email
+          schema:
+            type: string
+
+      responses:
+        "200":
+          description: Users retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserList"
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+    post:
+      operationId: createUser
+      # MODIFICATION: Changed summary
+      summary: Create a new user account
+      # MODIFICATION: Changed description
+      description: |
+        Register a new user account in the system.
+        
+        **v2 Breaking Change**: phone_number is now required.
+      tags:
+        - Users
+
+      security:
+        - spiffe: []
+
+      x-themis:
+        rate-limit-tier: low
+        timeout-tier: standard
+        idempotent: false
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+
+      responses:
+        "201":
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationError"
+
+        "409":
+          description: User already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserAlreadyExistsError"
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /users/{userId}:
+    get:
+      operationId: getUser
+      summary: Get user by ID
+      description: Retrieve a specific user by their unique identifier
+      tags:
+        - Users
+
+      security:
+        - spiffe: []
+        - bearer: []
+
+      x-themis:
+        rate-limit-tier: standard
+        timeout-tier: fast
+        idempotent: true
+
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: Unique user identifier
+          schema:
+            type: string
+            format: uuid
+
+      responses:
+        "200":
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserNotFoundError"
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+    # NOTE: PATCH (updateUser) is NOT removed, but uses different request body
+    patch:
+      operationId: updateUser
+      summary: Update user
+      # MODIFICATION: Changed description
+      description: |
+        Update an existing user's information.
+        
+        **v2 Change**: Use partial User object instead of UpdateUserRequest.
+      tags:
+        - Users
+
+      security:
+        - bearer: []
+
+      x-themis:
+        rate-limit-tier: standard
+        timeout-tier: standard
+        idempotent: true
+
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: Unique user identifier
+          schema:
+            type: string
+            format: uuid
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              # Changed from UpdateUserRequest to inline partial User
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                avatar_url:
+                  type: string
+                  format: uri
+                phone_number:
+                  type: string
+                  pattern: "^\\+[1-9]\\d{1,14}$"
+                preferences:
+                  $ref: "#/components/schemas/UserPreferences"
+
+      responses:
+        "200":
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationError"
+
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserNotFoundError"
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+    # BREAKING CHANGE: deleteUser operation is REMOVED
+    # delete:
+    #   operationId: deleteUser
+    #   ... removed in v2 ...
+
+  # ADDITION: New endpoint
+  /users/{userId}/deactivate:
+    post:
+      operationId: deactivateUser
+      summary: Deactivate a user account
+      description: |
+        Soft-delete a user by deactivating their account.
+        This is the recommended alternative to the removed deleteUser operation.
+      tags:
+        - Users
+
+      security:
+        - bearer: []
+
+      x-themis:
+        rate-limit-tier: low
+        timeout-tier: standard
+        idempotent: true
+
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: Unique user identifier
+          schema:
+            type: string
+            format: uuid
+
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Optional reason for deactivation
+
+      responses:
+        "200":
+          description: User deactivated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeactivationResult"
+
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserNotFoundError"
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "403":
+          $ref: "#/components/responses/Forbidden"

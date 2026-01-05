@@ -746,9 +746,11 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "semver",
  "serde",
  "serde_json",
  "serde_yaml",
+ "themis-compat",
  "themis-core",
  "themis-lint",
  "themis-openapi",
