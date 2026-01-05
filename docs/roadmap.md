@@ -2,9 +2,9 @@
 
 > **Version**: 1.10.0  
 > **Created**: 2026-01-04  
-> **Last Updated**: 2026-01-05  
+> **Last Updated**: 2026-01-06  
 > **Target Completion**: Week 14 (MVP)
-> **Current Progress**: Phase T3 Complete (Week 10 Complete)
+> **Current Progress**: Phase T4 In Progress (Week 11 In Progress)
 
 ---
 
@@ -408,12 +408,20 @@ themis-platform/
 
 ### Week 11: Artifact Publishing
 
-- [ ] Create `themis-artifact` crate
-- [ ] Design artifact format
-- [ ] Implement artifact builder
-- [ ] Add content-addressable storage (checksum)
-- [ ] Implement checksum verification
-- [ ] Add artifact versioning
+- [x] Create `themis-artifact` crate
+  > **Completed 2026-01-06**: Created crate with Artifact, ArtifactBuilder, ArtifactOperation types
+- [x] Design artifact format
+  > **Completed 2026-01-06**: JSON format with schema, version, service, checksum, operations, schemas, raw_contract
+- [x] Implement artifact builder
+  > **Completed 2026-01-06**: Fluent ArtifactBuilder with from_contract() helper
+- [x] Add content-addressable storage (checksum)
+  > **Completed 2026-01-06**: SHA256 checksum over deterministic JSON representation
+- [x] Implement checksum verification
+  > **Completed 2026-01-06**: verify_checksum() method with ArtifactError on mismatch
+- [x] Add artifact versioning
+  > **Completed 2026-01-06**: Artifacts include $schema URL and format version
+- [ ] Add `themis pack` CLI command
+- [ ] Add 23 artifact tests
 
 ### Week 12: Registry Client
 

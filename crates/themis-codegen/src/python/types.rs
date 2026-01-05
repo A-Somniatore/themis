@@ -219,7 +219,7 @@ impl<'a> PythonTypeGenerator<'a> {
                     let type_name = r
                         .reference
                         .split('/')
-                        .last()
+                        .next_back()
                         .unwrap_or(&r.reference)
                         .to_upper_camel_case();
                     base_classes.push(type_name);
@@ -334,7 +334,7 @@ impl<'a> PythonTypeGenerator<'a> {
                 let type_name = r
                     .reference
                     .split('/')
-                    .last()
+                    .next_back()
                     .unwrap_or(&r.reference)
                     .to_upper_camel_case();
                 Ok(type_name)
@@ -345,8 +345,8 @@ impl<'a> PythonTypeGenerator<'a> {
                     .values
                     .iter()
                     .map(|v| match &v.value {
-                        serde_json::Value::String(s) => format!("\"{}\"", s),
-                        other => format!("\"{}\"", other),
+                        serde_json::Value::String(s) => format!("\"{s}\""),
+                        other => format!("\"{other}\""),
                     })
                     .collect();
                 Ok(format!("Literal[{}]", variants.join(", ")))
@@ -366,7 +366,7 @@ impl<'a> PythonTypeGenerator<'a> {
                         let type_name = r
                             .reference
                             .split('/')
-                            .last()
+                            .next_back()
                             .unwrap_or(&r.reference)
                             .to_upper_camel_case();
                         return Ok(type_name);
@@ -418,7 +418,7 @@ impl<'a> PythonTypeGenerator<'a> {
         let mut parts = Vec::new();
         for (prop_name, prop_schema) in &obj.properties {
             let py_type = self.schema_to_py_type(prop_schema)?;
-            parts.push(format!("\"{}\": {}", prop_name, py_type));
+            parts.push(format!("\"{prop_name}\": {py_type}"));
         }
 
         // Python doesn't have a literal dict type syntax in typing

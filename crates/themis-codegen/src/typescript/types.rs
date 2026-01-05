@@ -235,7 +235,7 @@ impl<'a> TypeScriptTypeGenerator<'a> {
                 let type_name = r
                     .reference
                     .split('/')
-                    .last()
+                    .next_back()
                     .unwrap_or(&r.reference)
                     .to_upper_camel_case();
                 Ok(type_name)
@@ -246,8 +246,8 @@ impl<'a> TypeScriptTypeGenerator<'a> {
                     .values
                     .iter()
                     .map(|v| match &v.value {
-                        serde_json::Value::String(s) => format!("\"{}\"", s),
-                        other => format!("\"{}\"", other),
+                        serde_json::Value::String(s) => format!("\"{s}\""),
+                        other => format!("\"{other}\""),
                     })
                     .collect();
                 Ok(variants.join(" | "))

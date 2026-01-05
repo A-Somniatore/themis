@@ -497,7 +497,7 @@ impl PythonGenerator {
             .any(|p| p.location == ParameterLocation::Path);
 
         if !has_path_params {
-            return format!("\"{}\"", path);
+            return format!("\"{path}\"");
         }
 
         // Replace {param} with {request.param}

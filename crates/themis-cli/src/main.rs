@@ -8,8 +8,10 @@
 //! - `themis lint` - Run linting rules
 //! - `themis diff` - Compare two contract versions
 //! - `themis codegen` - Generate code from contracts
-//! - `themis publish` - Publish artifact (future)
-//! - `themis fetch` - Fetch artifact (future)
+//! - `themis pack` - Create artifact from contract
+//! - `themis inspect` - Inspect an artifact
+//! - `themis publish` - Publish artifact to registry (future)
+//! - `themis fetch` - Fetch artifact from registry (future)
 
 use clap::{Parser, Subcommand};
 use tracing_subscriber::EnvFilter;
@@ -42,6 +44,12 @@ enum Commands {
 
     /// Generate code from a contract
     Codegen(commands::codegen::CodegenArgs),
+
+    /// Create an artifact from a contract
+    Pack(commands::pack::PackArgs),
+
+    /// Inspect an artifact
+    Inspect(commands::pack::InspectArgs),
 }
 
 fn main() -> anyhow::Result<()> {
@@ -57,5 +65,7 @@ fn main() -> anyhow::Result<()> {
         Commands::Lint(args) => commands::lint::run(&args),
         Commands::Diff(args) => commands::diff::run(&args),
         Commands::Codegen(args) => commands::codegen::run(&args),
+        Commands::Pack(args) => commands::pack::run(&args),
+        Commands::Inspect(args) => commands::pack::run_inspect(&args),
     }
 }

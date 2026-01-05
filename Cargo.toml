@@ -8,6 +8,7 @@ members = [
     "crates/themis-codegen",
     "crates/themis-cli",
     "crates/themis-artifact",
+    "crates/themis-registry",
 ]
 
 [workspace.package]
@@ -47,6 +48,18 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # Testing
 proptest = "1.0"
 
+# HTTP client
+reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
+url = "2.5"
+
+# Filesystem
+dirs = "5.0"
+
+# Hashing
+sha2 = "0.10"
+hex = "0.4"
+base64 = "0.22"
+
 # Workspace crates
 themis-core = { path = "crates/themis-core" }
 themis-openapi = { path = "crates/themis-openapi" }
@@ -54,6 +67,7 @@ themis-lint = { path = "crates/themis-lint" }
 themis-compat = { path = "crates/themis-compat" }
 themis-codegen = { path = "crates/themis-codegen" }
 themis-artifact = { path = "crates/themis-artifact" }
+themis-registry = { path = "crates/themis-registry" }
 
 # Case conversion
 heck = "0.5"
