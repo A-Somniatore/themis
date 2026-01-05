@@ -1433,22 +1433,22 @@ Themis enforces the following validation rules for OpenAPI contracts:
 
 #### Required Rules (Errors)
 
-| Rule Code   | Rule Name                  | Description                                    |
-| ----------- | -------------------------- | ---------------------------------------------- |
-| `THEMIS001` | Missing Operation ID       | Every operation MUST have an `operationId`     |
-| `THEMIS002` | Duplicate Operation ID     | `operationId` MUST be unique across operations |
-| `THEMIS003` | Undefined Security Scheme  | Referenced security schemes MUST be defined    |
-| `THEMIS007` | Invalid Version            | API version MUST be valid semantic version     |
+| Rule Code   | Rule Name                 | Description                                    |
+| ----------- | ------------------------- | ---------------------------------------------- |
+| `THEMIS001` | Missing Operation ID      | Every operation MUST have an `operationId`     |
+| `THEMIS002` | Duplicate Operation ID    | `operationId` MUST be unique across operations |
+| `THEMIS003` | Undefined Security Scheme | Referenced security schemes MUST be defined    |
+| `THEMIS007` | Invalid Version           | API version MUST be valid semantic version     |
 
 #### Recommended Rules (Warnings)
 
-| Rule Code   | Rule Name                     | Description                                                |
-| ----------- | ----------------------------- | ---------------------------------------------------------- |
-| `THEMIS004` | Missing Error Responses       | Operations SHOULD declare error responses (4xx/5xx)        |
-| `THEMIS005` | Missing Operation Description | Operations SHOULD have descriptions                        |
-| `THEMIS006` | Missing Schema Description    | Schemas SHOULD have descriptions                           |
-| `THEMIS008` | No Security Defined           | Operations SHOULD have security requirements               |
-| `THEMIS009` | Missing Response Schema       | Success responses (2xx except 204) SHOULD have schemas     |
+| Rule Code   | Rule Name                     | Description                                            |
+| ----------- | ----------------------------- | ------------------------------------------------------ |
+| `THEMIS004` | Missing Error Responses       | Operations SHOULD declare error responses (4xx/5xx)    |
+| `THEMIS005` | Missing Operation Description | Operations SHOULD have descriptions                    |
+| `THEMIS006` | Missing Schema Description    | Schemas SHOULD have descriptions                       |
+| `THEMIS008` | No Security Defined           | Operations SHOULD have security requirements           |
+| `THEMIS009` | Missing Response Schema       | Success responses (2xx except 204) SHOULD have schemas |
 
 #### CLI Usage
 
@@ -1467,12 +1467,12 @@ themis validate --warnings-as-errors api.yaml
 
 Themis separates **validation** from **linting**:
 
-| Aspect       | Validation (`themis validate`)              | Linting (`themis lint`)                          |
-| ------------ | ------------------------------------------- | ------------------------------------------------ |
-| **Purpose**  | Ensure contract is structurally correct     | Enforce style conventions and best practices     |
-| **Blocking** | Errors block CI/deployment                  | Configurable (warnings or errors)                |
-| **Rules**    | Fixed rules (THEMIS001-009)                 | Configurable via `.themis-lint.yaml`             |
-| **Scope**    | Schema correctness, required fields         | Naming conventions, documentation, patterns      |
+| Aspect       | Validation (`themis validate`)          | Linting (`themis lint`)                      |
+| ------------ | --------------------------------------- | -------------------------------------------- |
+| **Purpose**  | Ensure contract is structurally correct | Enforce style conventions and best practices |
+| **Blocking** | Errors block CI/deployment              | Configurable (warnings or errors)            |
+| **Rules**    | Fixed rules (THEMIS001-009)             | Configurable via `.themis-lint.yaml`         |
+| **Scope**    | Schema correctness, required fields     | Naming conventions, documentation, patterns  |
 
 **Validation** checks are mandatory and cannot be disabled. They ensure the contract is valid and can be processed.
 
@@ -1480,14 +1480,14 @@ Themis separates **validation** from **linting**:
 
 ### 8.5 Lint Rules (Configurable)
 
-| Rule                       | Default  | Description                                      |
-| -------------------------- | -------- | ------------------------------------------------ |
-| `naming/operation-id`      | warn     | operationId should be camelCase                  |
-| `naming/path-format`       | warn     | Paths should be kebab-case                       |
-| `naming/schema-name`       | warn     | Schema names should be PascalCase                |
-| `docs/operation-summary`   | warn     | Operations should have summaries                 |
-| `security/require-auth`    | off      | All operations must have security (except allow list) |
-| `versioning/path-version`  | off      | Paths should include version prefix              |
+| Rule                      | Default | Description                                           |
+| ------------------------- | ------- | ----------------------------------------------------- |
+| `naming/operation-id`     | warn    | operationId should be camelCase                       |
+| `naming/path-format`      | warn    | Paths should be kebab-case                            |
+| `naming/schema-name`      | warn    | Schema names should be PascalCase                     |
+| `docs/operation-summary`  | warn    | Operations should have summaries                      |
+| `security/require-auth`   | off     | All operations must have security (except allow list) |
+| `versioning/path-version` | off     | Paths should include version prefix                   |
 
 ### 8.6 Breaking Change Detection
 
@@ -1495,35 +1495,35 @@ The `themis diff` command compares two contract versions and detects breaking ch
 
 #### Change Categories
 
-| Category   | Description                                    | Semver Impact |
-| ---------- | ---------------------------------------------- | ------------- |
-| Breaking   | Changes that break existing clients            | Major bump    |
-| Addition   | Backwards-compatible new features              | Minor bump    |
+| Category     | Description                                 | Semver Impact |
+| ------------ | ------------------------------------------- | ------------- |
+| Breaking     | Changes that break existing clients         | Major bump    |
+| Addition     | Backwards-compatible new features           | Minor bump    |
 | Modification | Non-functional changes (docs, descriptions) | Patch bump    |
 
 #### Breaking Change Rules
 
-| Rule Code  | Change Type                    | Severity |
-| ---------- | ------------------------------ | -------- |
-| BREAK001   | Operation removed              | Breaking |
-| BREAK002   | Operation path changed         | Breaking |
-| BREAK003   | Operation method changed       | Breaking |
-| BREAK004   | Required field added to request| Breaking |
-| BREAK005   | Field removed from response    | Breaking |
-| BREAK006   | Field type changed             | Breaking |
-| BREAK007   | Field became required          | Breaking |
-| BREAK008   | Enum value removed             | Breaking |
-| BREAK009   | Security scheme removed        | Breaking |
+| Rule Code | Change Type                     | Severity |
+| --------- | ------------------------------- | -------- |
+| BREAK001  | Operation removed               | Breaking |
+| BREAK002  | Operation path changed          | Breaking |
+| BREAK003  | Operation method changed        | Breaking |
+| BREAK004  | Required field added to request | Breaking |
+| BREAK005  | Field removed from response     | Breaking |
+| BREAK006  | Field type changed              | Breaking |
+| BREAK007  | Field became required           | Breaking |
+| BREAK008  | Enum value removed              | Breaking |
+| BREAK009  | Security scheme removed         | Breaking |
 
 #### Addition Rules (Non-Breaking)
 
-| Rule Code  | Change Type                    | Semver   |
-| ---------- | ------------------------------ | -------- |
-| ADD001     | Operation added                | Minor    |
-| ADD002     | Optional field added to request| Minor    |
-| ADD003     | Field added to response        | Minor    |
-| ADD004     | Enum value added               | Minor    |
-| ADD005     | Security scheme added          | Minor    |
+| Rule Code | Change Type                     | Semver |
+| --------- | ------------------------------- | ------ |
+| ADD001    | Operation added                 | Minor  |
+| ADD002    | Optional field added to request | Minor  |
+| ADD003    | Field added to response         | Minor  |
+| ADD004    | Enum value added                | Minor  |
+| ADD005    | Security scheme added           | Minor  |
 
 ---
 

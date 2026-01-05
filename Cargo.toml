@@ -7,6 +7,7 @@ members = [
     "crates/themis-compat",
     "crates/themis-codegen",
     "crates/themis-cli",
+    "crates/themis-artifact",
 ]
 
 [workspace.package]
@@ -52,6 +53,7 @@ themis-openapi = { path = "crates/themis-openapi" }
 themis-lint = { path = "crates/themis-lint" }
 themis-compat = { path = "crates/themis-compat" }
 themis-codegen = { path = "crates/themis-codegen" }
+themis-artifact = { path = "crates/themis-artifact" }
 
 # Case conversion
 heck = "0.5"

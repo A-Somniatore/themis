@@ -5,7 +5,9 @@
 use anyhow::Context;
 use clap::{Args, ValueEnum};
 use std::path::PathBuf;
-use themis_codegen::{CodeGenerator, GeneratorConfig, PythonGenerator, RustGenerator, TypeScriptGenerator};
+use themis_codegen::{
+    CodeGenerator, GeneratorConfig, PythonGenerator, RustGenerator, TypeScriptGenerator,
+};
 use themis_openapi::parse_openapi;
 
 /// Supported target languages for code generation.

@@ -10,8 +10,8 @@
 
 use crate::config::GeneratorConfig;
 use crate::error::{CodegenError, CodegenResult};
-use crate::traits::{CodeGenerator, GeneratedCode, GeneratedFile};
 use crate::python::types::{format_docstring, PythonTypeGenerator};
+use crate::traits::{CodeGenerator, GeneratedCode, GeneratedFile};
 use heck::{ToSnakeCase, ToUpperCamelCase};
 use std::fmt::Write;
 use themis_core::operation::ParameterLocation;
@@ -225,15 +225,28 @@ impl PythonGenerator {
         // Generate specific error types
         let error_types = [
             ("BadRequest", "400", "BAD_REQUEST", "Bad request error"),
-            ("Unauthorized", "401", "UNAUTHENTICATED", "Unauthorized error"),
+            (
+                "Unauthorized",
+                "401",
+                "UNAUTHENTICATED",
+                "Unauthorized error",
+            ),
             ("Forbidden", "403", "PERMISSION_DENIED", "Forbidden error"),
             ("NotFound", "404", "NOT_FOUND", "Not found error"),
-            ("InternalError", "500", "INTERNAL_ERROR", "Internal server error"),
+            (
+                "InternalError",
+                "500",
+                "INTERNAL_ERROR",
+                "Internal server error",
+            ),
         ];
 
         for (name, _status, code, desc) in error_types {
             output.push_str("@dataclass\n");
-            let _ = writeln!(output, "class {service_name}{name}Error({service_name}Error):");
+            let _ = writeln!(
+                output,
+                "class {service_name}{name}Error({service_name}Error):"
+            );
             output.push_str(&format_docstring(desc, 1));
             let _ = writeln!(output, "    code: str = \"{code}\"");
             output.push_str("\n\n");
@@ -293,7 +306,10 @@ impl PythonGenerator {
         output.push_str("        self,\n");
         output.push_str("        ok: bool,\n");
         output.push_str("        data: Any = None,\n");
-        let _ = writeln!(output, "        error: Optional[{service_name}ServiceError] = None,");
+        let _ = writeln!(
+            output,
+            "        error: Optional[{service_name}ServiceError] = None,"
+        );
         output.push_str("    ) -> None:\n");
         output.push_str("        self.ok = ok\n");
         output.push_str("        self.data = data\n");
@@ -318,7 +334,9 @@ impl PythonGenerator {
         output.push_str("        self.headers = headers or {}\n");
         output.push_str("        self._client = httpx.Client(\n");
         output.push_str("            base_url=self.base_url,\n");
-        output.push_str("            headers={\"Content-Type\": \"application/json\", **self.headers},\n");
+        output.push_str(
+            "            headers={\"Content-Type\": \"application/json\", **self.headers},\n",
+        );
         output.push_str("            timeout=timeout,\n");
         output.push_str("        )\n\n");
 
@@ -352,16 +370,27 @@ impl PythonGenerator {
         output.push_str("            )\n");
         output.push_str("            if response.is_success:\n");
         output.push_str("                if response.status_code == 204:\n");
-        let _ = writeln!(output, "                    return {service_name}Result(ok=True, data=None)");
+        let _ = writeln!(
+            output,
+            "                    return {service_name}Result(ok=True, data=None)"
+        );
         output.push_str("                data = response.json()\n");
-        let _ = writeln!(output, "                return {service_name}Result(ok=True, data=data)");
+        let _ = writeln!(
+            output,
+            "                return {service_name}Result(ok=True, data=data)"
+        );
         output.push_str("            else:\n");
         output.push_str("                error_data = response.json()\n");
-        let _ = writeln!(output, "                return {service_name}Result(ok=False, error=error_data)");
+        let _ = writeln!(
+            output,
+            "                return {service_name}Result(ok=False, error=error_data)"
+        );
         output.push_str("        except httpx.HTTPError as e:\n");
         let _ = writeln!(output, "            return {service_name}Result(");
         output.push_str("                ok=False,\n");
-        output.push_str("                error={\"code\": \"INTERNAL_ERROR\", \"message\": str(e)},\n");
+        output.push_str(
+            "                error={\"code\": \"INTERNAL_ERROR\", \"message\": str(e)},\n",
+        );
         output.push_str("            )\n\n");
 
         // Generate operation methods
@@ -408,10 +437,7 @@ impl PythonGenerator {
                             param.name
                         );
                     } else {
-                        let _ = writeln!(
-                            output,
-                            "        if request.{py_name} is not None:"
-                        );
+                        let _ = writeln!(output, "        if request.{py_name} is not None:");
                         let _ = writeln!(
                             output,
                             "            params[\"{}\"] = request.{py_name}",
@@ -557,7 +583,10 @@ impl PythonGenerator {
         let _ = writeln!(output, "    handlers: {service_name}Handlers,");
         output.push_str(") -> APIRouter:\n");
         output.push_str(&format_docstring(
-            &format!("Create a FastAPI router for {}.", contract.metadata.service_name),
+            &format!(
+                "Create a FastAPI router for {}.",
+                contract.metadata.service_name
+            ),
             1,
         ));
         output.push_str("    router = APIRouter()\n\n");
@@ -565,7 +594,9 @@ impl PythonGenerator {
         // Helper to get request context
         output.push_str("    def get_context(request: Request) -> RequestContext:\n");
         output.push_str("        return RequestContext(\n");
-        output.push_str("            request_id=request.headers.get(\"X-Request-ID\", str(uuid4())),\n");
+        output.push_str(
+            "            request_id=request.headers.get(\"X-Request-ID\", str(uuid4())),\n",
+        );
         output.push_str("            user_id=getattr(request.state, \"user_id\", None),\n");
         output.push_str("            headers=dict(request.headers),\n");
         output.push_str("        )\n\n");
@@ -580,7 +611,8 @@ impl PythonGenerator {
                 .method
                 .as_ref()
                 .map_or_else(|| "get".to_string(), |m| m.to_string().to_lowercase());
-            let path = self.path_to_fastapi_format(&op.path.clone().unwrap_or_else(|| "/".to_string()));
+            let path =
+                self.path_to_fastapi_format(&op.path.clone().unwrap_or_else(|| "/".to_string()));
 
             let _ = writeln!(output, "    @router.{http_method}(\"{path}\")");
 
@@ -917,7 +949,9 @@ mod tests {
         assert!(client_file.content.contains("def get_user("));
         assert!(client_file.content.contains("def create_user("));
         assert!(client_file.content.contains("import httpx"));
-        assert!(client_file.content.contains("def create_users_service_client"));
+        assert!(client_file
+            .content
+            .contains("def create_users_service_client"));
     }
 
     #[test]
@@ -930,10 +964,16 @@ mod tests {
         let handlers_file = result.get_file("handlers.py").unwrap();
 
         assert!(handlers_file.content.contains("class RequestContext:"));
-        assert!(handlers_file.content.contains("class UsersServiceHandlers(Protocol):"));
-        assert!(handlers_file.content.contains("def create_users_service_router"));
+        assert!(handlers_file
+            .content
+            .contains("class UsersServiceHandlers(Protocol):"));
+        assert!(handlers_file
+            .content
+            .contains("def create_users_service_router"));
         assert!(handlers_file.content.contains("from fastapi import"));
-        assert!(handlers_file.content.contains("@router.get(\"/users/{userId}\")"));
+        assert!(handlers_file
+            .content
+            .contains("@router.get(\"/users/{userId}\")"));
         assert!(handlers_file.content.contains("@router.post(\"/users\")"));
     }
 
@@ -1005,7 +1045,9 @@ mod tests {
         let types_file = result.get_file("types.py").unwrap();
 
         // Should contain docstrings
-        assert!(types_file.content.contains("\"\"\"A user in the system\"\"\""));
+        assert!(types_file
+            .content
+            .contains("\"\"\"A user in the system\"\"\""));
     }
 
     #[test]

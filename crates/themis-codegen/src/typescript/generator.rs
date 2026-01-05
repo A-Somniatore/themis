@@ -607,11 +607,7 @@ impl TypeScriptGenerator {
             );
 
             // Determine status code
-            let status_code = if op
-                .method
-                .as_ref()
-                .is_some_and(|m| m.to_string() == "POST")
-            {
+            let status_code = if op.method.as_ref().is_some_and(|m| m.to_string() == "POST") {
                 "201"
             } else {
                 "200"
