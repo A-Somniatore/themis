@@ -268,10 +268,7 @@ mod tests {
     use themis_core::{Operation, Version};
 
     fn create_contract(version: &str) -> Contract {
-        let parts: Vec<u32> = version
-            .split('.')
-            .map(|s| s.parse().unwrap_or(0))
-            .collect();
+        let parts: Vec<u32> = version.split('.').map(|s| s.parse().unwrap_or(0)).collect();
         Contract {
             format: ContractFormat::OpenApi,
             version: Version::new(
@@ -405,19 +402,46 @@ mod tests {
     #[test]
     fn test_is_sufficient_bump() {
         // Major required
-        assert!(is_sufficient_bump(SuggestedBump::Major, SuggestedBump::Major));
-        assert!(!is_sufficient_bump(SuggestedBump::Minor, SuggestedBump::Major));
-        assert!(!is_sufficient_bump(SuggestedBump::Patch, SuggestedBump::Major));
+        assert!(is_sufficient_bump(
+            SuggestedBump::Major,
+            SuggestedBump::Major
+        ));
+        assert!(!is_sufficient_bump(
+            SuggestedBump::Minor,
+            SuggestedBump::Major
+        ));
+        assert!(!is_sufficient_bump(
+            SuggestedBump::Patch,
+            SuggestedBump::Major
+        ));
 
         // Minor required
-        assert!(is_sufficient_bump(SuggestedBump::Major, SuggestedBump::Minor));
-        assert!(is_sufficient_bump(SuggestedBump::Minor, SuggestedBump::Minor));
-        assert!(!is_sufficient_bump(SuggestedBump::Patch, SuggestedBump::Minor));
+        assert!(is_sufficient_bump(
+            SuggestedBump::Major,
+            SuggestedBump::Minor
+        ));
+        assert!(is_sufficient_bump(
+            SuggestedBump::Minor,
+            SuggestedBump::Minor
+        ));
+        assert!(!is_sufficient_bump(
+            SuggestedBump::Patch,
+            SuggestedBump::Minor
+        ));
 
         // Patch required
-        assert!(is_sufficient_bump(SuggestedBump::Major, SuggestedBump::Patch));
-        assert!(is_sufficient_bump(SuggestedBump::Minor, SuggestedBump::Patch));
-        assert!(is_sufficient_bump(SuggestedBump::Patch, SuggestedBump::Patch));
+        assert!(is_sufficient_bump(
+            SuggestedBump::Major,
+            SuggestedBump::Patch
+        ));
+        assert!(is_sufficient_bump(
+            SuggestedBump::Minor,
+            SuggestedBump::Patch
+        ));
+        assert!(is_sufficient_bump(
+            SuggestedBump::Patch,
+            SuggestedBump::Patch
+        ));
     }
 
     #[test]

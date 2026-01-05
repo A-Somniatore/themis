@@ -691,10 +691,8 @@ mod tests {
     #[test]
     fn test_schema_removed_is_breaking() {
         let mut old = create_test_contract();
-        old.schemas.insert(
-            "User".to_string(),
-            Schema::Object(ObjectSchema::default()),
-        );
+        old.schemas
+            .insert("User".to_string(), Schema::Object(ObjectSchema::default()));
 
         let new = create_test_contract();
         let report = diff_contracts(&old, &new);
@@ -711,10 +709,8 @@ mod tests {
         let old = create_test_contract();
 
         let mut new = create_test_contract();
-        new.schemas.insert(
-            "User".to_string(),
-            Schema::Object(ObjectSchema::default()),
-        );
+        new.schemas
+            .insert("User".to_string(), Schema::Object(ObjectSchema::default()));
 
         let report = diff_contracts(&old, &new);
 

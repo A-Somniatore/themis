@@ -5,6 +5,7 @@ members = [
     "crates/themis-openapi",
     "crates/themis-lint",
     "crates/themis-compat",
+    "crates/themis-codegen",
     "crates/themis-cli",
 ]
 
@@ -49,6 +50,11 @@ proptest = "1.0"
 themis-core = { path = "crates/themis-core" }
 themis-openapi = { path = "crates/themis-openapi" }
 themis-lint = { path = "crates/themis-lint" }
+themis-compat = { path = "crates/themis-compat" }
+themis-codegen = { path = "crates/themis-codegen" }
+
+# Case conversion
+heck = "0.5"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

@@ -147,8 +147,8 @@ fn output_text(report: &CompatibilityReport, old_path: &Path, new_path: &Path) {
 
 /// Outputs the report in JSON format.
 fn output_json(report: &CompatibilityReport) -> anyhow::Result<()> {
-    let json = serde_json::to_string_pretty(report)
-        .context("Failed to serialize report to JSON")?;
+    let json =
+        serde_json::to_string_pretty(report).context("Failed to serialize report to JSON")?;
     println!("{json}");
     Ok(())
 }

@@ -1,0 +1,23 @@
+[package]
+name = "themis-codegen"
+version = "0.1.0"
+edition = "2021"
+description = "Code generation for multiple languages from Themis contracts"
+license = "Apache-2.0"
+keywords = ["openapi", "codegen", "code-generation", "rust", "typescript"]
+categories = ["development-tools", "web-programming"]
+
+[dependencies]
+themis-core = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+chrono = { workspace = true }
+
+# Code generation utilities
+heck = { workspace = true }
+
+[dev-dependencies]
+
+[lints]
+workspace = true

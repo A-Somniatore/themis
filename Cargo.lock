@@ -760,6 +760,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "themis-codegen"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "heck",
+ "serde",
+ "serde_json",
+ "themis-core",
+ "thiserror",
+]
+
+[[package]]
 name = "themis-compat"
 version = "0.1.0"
 dependencies = [
