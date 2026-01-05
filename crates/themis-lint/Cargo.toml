@@ -10,10 +10,12 @@ rust-version.workspace = true
 [dependencies]
 themis-core = { workspace = true }
 serde = { workspace = true }
+serde_yaml = { workspace = true }
 thiserror = { workspace = true }
 
 [dev-dependencies]
 proptest = { workspace = true }
+tempfile = "3.10"
 
 [lints]
 workspace = true

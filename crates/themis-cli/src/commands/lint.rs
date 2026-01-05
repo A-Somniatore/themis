@@ -6,7 +6,7 @@
 use anyhow::Context;
 use clap::Args;
 use std::path::{Path, PathBuf};
-use themis_lint::{LintConfig, LintReport, LintReporter, Severity};
+use themis_lint::{LintConfig, LintConfigFile, LintReport, LintReporter, Severity};
 use themis_openapi::parse_openapi;
 
 /// Arguments for the lint command.
@@ -22,6 +22,18 @@ pub struct LintArgs {
     /// Treat warnings as errors
     #[arg(long)]
     pub strict: bool,
+
+    /// Path to lint configuration file (default: auto-detect .themis-lint.yaml)
+    #[arg(short, long)]
+    pub config: Option<PathBuf>,
+
+    /// Use strict configuration (all rules as errors)
+    #[arg(long, conflicts_with = "relaxed")]
+    pub strict_config: bool,
+
+    /// Use relaxed configuration (all rules as warnings)
+    #[arg(long, conflicts_with = "strict_config")]
+    pub relaxed: bool,
 
     /// List available lint rules
     #[arg(long)]
@@ -55,12 +67,8 @@ pub fn run(args: &LintArgs) -> anyhow::Result<()> {
     let contract = parse_openapi(&content)
         .with_context(|| format!("Failed to parse contract: {}", contract_path.display()))?;
 
-    // Create linter with appropriate config
-    let config = if args.strict {
-        LintConfig::strict()
-    } else {
-        LintConfig::default()
-    };
+    // Load lint configuration
+    let config = load_lint_config(args, contract_path)?;
     let linter = LintReporter::new(config);
 
     // Run linting
@@ -81,6 +89,46 @@ pub fn run(args: &LintArgs) -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+/// Loads lint configuration based on CLI args and config files.
+fn load_lint_config(args: &LintArgs, contract_path: &Path) -> anyhow::Result<LintConfig> {
+    // Priority:
+    // 1. --strict-config flag
+    // 2. --relaxed flag
+    // 3. --config <file>
+    // 4. Auto-detect .themis-lint.yaml
+    // 5. Default configuration
+
+    if args.strict_config {
+        return Ok(LintConfig::strict());
+    }
+
+    if args.relaxed {
+        return Ok(LintConfig::relaxed());
+    }
+
+    if let Some(config_path) = &args.config {
+        if !config_path.exists() {
+            anyhow::bail!("Config file not found: {}", config_path.display());
+        }
+        let file_config = LintConfigFile::from_file(config_path)
+            .with_context(|| format!("Failed to parse config file: {}", config_path.display()))?;
+        return file_config
+            .to_lint_config()
+            .with_context(|| "Invalid lint configuration");
+    }
+
+    // Auto-detect config file from contract directory
+    let start_dir = contract_path.parent().unwrap_or_else(|| Path::new("."));
+
+    match LintConfigFile::load_or_default(start_dir) {
+        Ok(config) => Ok(config),
+        Err(e) => {
+            eprintln!("Warning: Failed to load config file: {e}");
+            Ok(LintConfig::default())
+        }
+    }
 }
 
 /// Prints available lint rules.

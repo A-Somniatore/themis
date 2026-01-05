@@ -32,10 +32,12 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod config;
 pub mod reporter;
 pub mod rule;
 pub mod rules;
 
+pub use config::{ConfigError, LintConfigFile};
 pub use reporter::{LintConfig, LintIssue, LintReport, LintReporter, Severity};
 pub use rule::{Rule, RuleConfig};
 

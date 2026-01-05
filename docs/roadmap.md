@@ -1,10 +1,10 @@
 # Themis – Development Roadmap
 
-> **Version**: 1.11.0  
+> **Version**: 1.12.0  
 > **Created**: 2026-01-04  
 > **Last Updated**: 2026-01-06  
 > **Target Completion**: Week 14 (MVP)
-> **Current Progress**: Phase T4 Complete (Week 12 Complete)
+> **Current Progress**: Phase T5 In Progress (Week 13)
 
 ---
 
@@ -305,9 +305,10 @@ themis-platform/
   - [x] `docs/operation-summary`: operations should have summaries
   - [x] `docs/operation-description`: operations should have descriptions
   - [x] `docs/schema-description`: schemas should have descriptions
-- [ ] Add `.themis-lint.yaml` configuration file support
+- [x] Add `.themis-lint.yaml` configuration file support
+  > **Completed 2026-01-06**: LintConfigFile with extends (default/strict/relaxed), per-rule overrides, auto-detection
 - [x] Add `themis lint` CLI command
-- [x] Add lint rule tests (32 tests)
+- [x] Add lint rule tests (32 tests → 50 tests with config tests)
 
 ### Week 6: Breaking Change Detection ✅
 
