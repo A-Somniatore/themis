@@ -1,10 +1,10 @@
 # Themis – Development Roadmap
 
-> **Version**: 1.4.0  
+> **Version**: 1.5.0  
 > **Created**: 2026-01-04  
 > **Last Updated**: 2026-01-06  
 > **Target Completion**: Week 14 (MVP)
-> **Current Progress**: Phase T3 In Progress (Week 7)
+> **Current Progress**: Phase T3 In Progress (Week 8 Complete)
 
 ---
 
@@ -253,13 +253,20 @@ themis-platform/
 - [x] Test generated code compiles
   > **Completed 2026-01-06**: 30 tests covering all type generation and validation scenarios
 
-### Week 8: Rust Handlers & CLI
+### Week 8: Rust Handlers & CLI ✅
 
-- [ ] Generate handler trait definitions
-- [ ] Generate request/response types per operation
-- [ ] Generate error enum
-- [ ] Add `themis codegen --language rust` CLI command
-- [ ] Document generated code usage
+- [x] Generate handler trait definitions
+  > **Completed 2026-01-06**: Handler traits with async fn handle(), Send + Sync + 'static bounds
+- [x] Generate request/response types per operation
+  > **Completed 2026-01-06**: Typed request structs with path/query params, response enums with status variants
+- [x] Generate error enum
+  > **Completed 2026-01-06**: ServiceError with BadRequest, Unauthorized, NotFound, etc. + status_code() method
+- [x] Add RequestContext parameter
+  > **Completed 2026-01-06**: RequestContext placeholder for Archimedes integration (request_id, user_id, headers)
+- [x] Add `themis codegen --language rust` CLI command
+  > **Completed 2026-01-06**: CLI with --output, --include-docs, --include-validation, --force, --dry-run options
+- [x] Add handler generation tests (12 tests)
+  > **Completed 2026-01-06**: Tests for RequestContext, error types, request/response types, service struct
 
 ### Week 9: TypeScript Generation
 

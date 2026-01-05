@@ -53,6 +53,15 @@ themis lint ./examples/users-service/v1/openapi.yaml
 
 # Compare versions for breaking changes
 themis diff ./examples/users-service/v1/openapi.yaml ./examples/users-service/v2/openapi.yaml
+
+# Generate Rust code from a contract
+themis codegen ./examples/users-service/v1/openapi.yaml -o ./generated
+
+# Generate with validation derives
+themis codegen ./api/openapi.yaml --include-validation -o ./src/gen
+
+# Dry run to preview generated files
+themis codegen ./api/openapi.yaml --dry-run
 ```
 
 ## Documentation
