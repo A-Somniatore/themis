@@ -5,7 +5,7 @@
 use anyhow::Context;
 use clap::{Args, ValueEnum};
 use std::path::PathBuf;
-use themis_codegen::{CodeGenerator, GeneratorConfig, RustGenerator, TypeScriptGenerator};
+use themis_codegen::{CodeGenerator, GeneratorConfig, PythonGenerator, RustGenerator, TypeScriptGenerator};
 use themis_openapi::parse_openapi;
 
 /// Supported target languages for code generation.
@@ -15,6 +15,8 @@ pub enum Language {
     Rust,
     /// Generate TypeScript code
     Typescript,
+    /// Generate Python code
+    Python,
 }
 
 impl std::fmt::Display for Language {
@@ -22,6 +24,7 @@ impl std::fmt::Display for Language {
         match self {
             Self::Rust => write!(f, "rust"),
             Self::Typescript => write!(f, "typescript"),
+            Self::Python => write!(f, "python"),
         }
     }
 }
@@ -89,6 +92,12 @@ pub fn run(args: &CodegenArgs) -> anyhow::Result<()> {
         }
         Language::Typescript => {
             let generator = TypeScriptGenerator::new(config);
+            generator
+                .generate(&contract)
+                .with_context(|| "Failed to generate code")?
+        }
+        Language::Python => {
+            let generator = PythonGenerator::new(config);
             generator
                 .generate(&contract)
                 .with_context(|| "Failed to generate code")?
