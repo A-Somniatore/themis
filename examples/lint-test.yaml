@@ -1,0 +1,30 @@
+openapi: "3.1.0"
+info:
+  title: "Test API with Lint Issues"
+  version: "1.0.0"
+paths:
+  /UserProfiles:  # Should be kebab-case: /user-profiles
+    get:
+      operationId: Get_User_Profile  # Should be camelCase: getUserProfile
+      responses:
+        '200':
+          description: Success
+  /orders/{orderId}:
+    post:
+      operationId: CreateOrder  # Should be camelCase: createOrder
+      # Missing summary
+      responses:
+        '201':
+          description: Created
+components:
+  schemas:
+    user_profile:  # Should be PascalCase: UserProfile
+      type: object
+      properties:
+        name:
+          type: string
+    Order:  # This is correct
+      type: object
+      properties:
+        id:
+          type: string

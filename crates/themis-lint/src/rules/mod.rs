@@ -2,7 +2,7 @@
 //!
 //! This module contains all built-in lint rules organized by category:
 //!
-//! - [`naming`]: Naming convention checks (camelCase, kebab-case, PascalCase)
+//! - [`naming`]: Naming convention checks (camelCase, kebab-case, `PascalCase`)
 //! - [`documentation`]: Documentation completeness checks
 //! - [`security`]: Security best practice checks (coming soon)
 //! - [`versioning`]: Versioning rule checks (coming soon)

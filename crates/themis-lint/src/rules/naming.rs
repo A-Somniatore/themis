@@ -3,7 +3,7 @@
 //! These rules check that identifiers follow consistent naming conventions:
 //! - Operation IDs should be camelCase
 //! - URL paths should be kebab-case
-//! - Schema names should be PascalCase
+//! - Schema names should be `PascalCase`
 
 use crate::reporter::LintIssue;
 use crate::rule::{Rule, RuleConfig};
@@ -35,19 +35,18 @@ impl Rule for OperationIdCamelCase {
             .operations
             .iter()
             .filter_map(|(id, op)| {
-                if !is_camel_case(id) {
+                if is_camel_case(id) {
+                    None
+                } else {
                     Some(LintIssue {
                         rule: self.id().to_string(),
                         severity: config.severity,
                         message: format!(
-                            "Operation ID '{}' should be camelCase (e.g., '{}')",
-                            id,
+                            "Operation ID '{id}' should be camelCase (e.g., '{}')",
                             to_camel_case(id)
                         ),
                         location: op.path.clone(),
                     })
-                } else {
-                    None
                 }
             })
             .collect()
@@ -81,27 +80,25 @@ impl Rule for PathKebabCase {
             .iter()
             .filter_map(|(id, op)| {
                 let path = op.path.as_ref()?;
-                if !is_kebab_case_path(path) {
+                if is_kebab_case_path(path) {
+                    None
+                } else {
                     Some(LintIssue {
                         rule: self.id().to_string(),
                         severity: config.severity,
                         message: format!(
-                            "Path '{}' for operation '{}' should use kebab-case segments (e.g., '{}')",
-                            path,
-                            id,
+                            "Path '{path}' for operation '{id}' should use kebab-case segments (e.g., '{}')",
                             to_kebab_case_path(path)
                         ),
                         location: Some(path.clone()),
                     })
-                } else {
-                    None
                 }
             })
             .collect()
     }
 }
 
-/// Checks that schema names use PascalCase naming.
+/// Checks that schema names use `PascalCase` naming.
 ///
 /// # Examples
 ///
@@ -127,19 +124,18 @@ impl Rule for SchemaNamePascalCase {
             .schemas
             .keys()
             .filter_map(|name| {
-                if !is_pascal_case(name) {
+                if is_pascal_case(name) {
+                    None
+                } else {
                     Some(LintIssue {
                         rule: self.id().to_string(),
                         severity: config.severity,
                         message: format!(
-                            "Schema name '{}' should be PascalCase (e.g., '{}')",
-                            name,
+                            "Schema name '{name}' should be PascalCase (e.g., '{}')",
                             to_pascal_case(name)
                         ),
                         location: Some(format!("#/components/schemas/{name}")),
                     })
-                } else {
-                    None
                 }
             })
             .collect()
@@ -298,9 +294,9 @@ fn to_kebab_case(s: &str) -> String {
     result
 }
 
-/// Checks if a string is PascalCase.
+/// Checks if a string is `PascalCase`.
 ///
-/// A string is PascalCase if:
+/// A string is `PascalCase` if:
 /// - It starts with an uppercase letter
 /// - It contains only alphanumeric characters
 /// - Word boundaries are marked by uppercase letters
@@ -325,7 +321,7 @@ fn is_pascal_case(s: &str) -> bool {
     !has_consecutive_uppercase(s)
 }
 
-/// Converts a string to PascalCase.
+/// Converts a string to `PascalCase`.
 fn to_pascal_case(s: &str) -> String {
     let mut result = String::new();
     let mut capitalize_next = true;

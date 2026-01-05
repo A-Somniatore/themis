@@ -37,16 +37,16 @@ impl Rule for OperationSummary {
             .operations
             .iter()
             .filter_map(|(id, op)| {
-                if op.summary.is_none() || op.summary.as_ref().is_some_and(|s| s.trim().is_empty())
-                {
+                let has_summary = op.summary.as_ref().is_some_and(|s| !s.trim().is_empty());
+                if has_summary {
+                    None
+                } else {
                     Some(LintIssue {
                         rule: self.id().to_string(),
                         severity: config.severity,
-                        message: format!("Operation '{}' is missing a summary", id),
+                        message: format!("Operation '{id}' is missing a summary"),
                         location: op.path.clone(),
                     })
-                } else {
-                    None
                 }
             })
             .collect()
@@ -82,17 +82,19 @@ impl Rule for OperationDescription {
             .operations
             .iter()
             .filter_map(|(id, op)| {
-                if op.description.is_none()
-                    || op.description.as_ref().is_some_and(|d| d.trim().is_empty())
-                {
+                let has_description = op
+                    .description
+                    .as_ref()
+                    .is_some_and(|d| !d.trim().is_empty());
+                if has_description {
+                    None
+                } else {
                     Some(LintIssue {
                         rule: self.id().to_string(),
                         severity: config.severity,
-                        message: format!("Operation '{}' is missing a description", id),
+                        message: format!("Operation '{id}' is missing a description"),
                         location: op.path.clone(),
                     })
-                } else {
-                    None
                 }
             })
             .collect()
@@ -128,15 +130,15 @@ impl Rule for SchemaDescription {
             .schemas
             .iter()
             .filter_map(|(name, schema)| {
-                if !schema_has_description(schema) {
+                if schema_has_description(schema) {
+                    None
+                } else {
                     Some(LintIssue {
                         rule: self.id().to_string(),
                         severity: config.severity,
-                        message: format!("Schema '{}' is missing a description", name),
+                        message: format!("Schema '{name}' is missing a description"),
                         location: Some(format!("#/components/schemas/{name}")),
                     })
-                } else {
-                    None
                 }
             })
             .collect()
