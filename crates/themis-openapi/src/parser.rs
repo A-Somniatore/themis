@@ -121,7 +121,7 @@ fn convert_openapi_to_contract(openapi: &OpenAPI) -> ThemisResult<Contract> {
         version,
         metadata,
         operations: HashMap::new(),
-        schemas: HashMap::new(),
+        schemas: IndexMap::new(),
         security_schemes: HashMap::new(),
     };
 
@@ -728,7 +728,7 @@ fn convert_type_schema(schema_type: &OpenApiType, schema: &OpenApiSchema) -> Sch
             })
         }
         OpenApiType::Object(object_type) => {
-            let properties: HashMap<String, Schema> = object_type
+            let properties: IndexMap<String, Schema> = object_type
                 .properties
                 .iter()
                 .map(|(name, prop)| {
@@ -779,7 +779,7 @@ fn convert_type_schema(schema_type: &OpenApiType, schema: &OpenApiSchema) -> Sch
 
 /// Converts an AnySchema with properties to an Object schema.
 fn convert_object_from_any(any: &openapiv3::AnySchema, schema: &OpenApiSchema) -> Schema {
-    let properties: HashMap<String, Schema> = any
+    let properties: IndexMap<String, Schema> = any
         .properties
         .iter()
         .map(|(name, prop)| {

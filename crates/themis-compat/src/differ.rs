@@ -4,6 +4,7 @@
 
 use crate::changes::{Addition, BreakingChange, Modification};
 use crate::report::CompatibilityReport;
+use indexmap::IndexMap;
 use std::collections::{HashMap, HashSet};
 use themis_core::operation::{Parameter, Response};
 use themis_core::schema::{EnumSchema, ObjectSchema};
@@ -438,8 +439,8 @@ fn diff_enum_schemas(
 
 /// Compares top-level schemas between contracts.
 fn diff_schemas(
-    old_schemas: &HashMap<String, Schema>,
-    new_schemas: &HashMap<String, Schema>,
+    old_schemas: &IndexMap<String, Schema>,
+    new_schemas: &IndexMap<String, Schema>,
     report: &mut CompatibilityReport,
 ) {
     let old_names: HashSet<&String> = old_schemas.keys().collect();
@@ -529,7 +530,7 @@ mod tests {
                 documentation_url: None,
             },
             operations: HashMap::new(),
-            schemas: HashMap::new(),
+            schemas: IndexMap::new(),
             security_schemes: HashMap::new(),
         }
     }

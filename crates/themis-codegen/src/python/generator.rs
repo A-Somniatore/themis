@@ -756,6 +756,7 @@ impl CodeGenerator for PythonGenerator {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use indexmap::IndexMap;
     use std::collections::HashMap;
     use themis_core::contract::{ContractFormat, ContractMetadata};
     use themis_core::operation::{HttpMethod, MediaType, Parameter, RequestBody, Response};
@@ -764,13 +765,13 @@ mod tests {
     use themis_core::Version;
 
     fn create_test_contract() -> Contract {
-        let mut schemas = HashMap::new();
+        let mut schemas = IndexMap::new();
         schemas.insert(
             "User".to_string(),
             Schema::Object(ObjectSchema {
                 description: Some("A user in the system".to_string()),
                 properties: {
-                    let mut props = HashMap::new();
+                    let mut props = IndexMap::new();
                     props.insert("id".to_string(), Schema::String(StringSchema::default()));
                     props.insert("email".to_string(), Schema::String(StringSchema::default()));
                     props.insert("name".to_string(), Schema::String(StringSchema::default()));
@@ -835,7 +836,7 @@ mod tests {
                         schema: Schema::Object(ObjectSchema {
                             description: None,
                             properties: {
-                                let mut props = HashMap::new();
+                                let mut props = IndexMap::new();
                                 props.insert(
                                     "email".to_string(),
                                     Schema::String(StringSchema::default()),
@@ -991,7 +992,7 @@ mod tests {
                 repository: None,
                 documentation_url: None,
             },
-            schemas: HashMap::new(),
+            schemas: IndexMap::new(),
             operations: HashMap::new(),
             security_schemes: HashMap::new(),
         };

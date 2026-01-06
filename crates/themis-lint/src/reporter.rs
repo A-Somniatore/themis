@@ -223,6 +223,7 @@ impl Default for LintReporter {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use indexmap::IndexMap;
     use std::collections::HashMap;
     use themis_core::contract::{ContractFormat, ContractMetadata};
     use themis_core::operation::Operation;
@@ -240,7 +241,7 @@ mod tests {
                 documentation_url: None,
             },
             operations: HashMap::new(),
-            schemas: HashMap::new(),
+            schemas: IndexMap::new(),
             security_schemes: HashMap::new(),
         }
     }

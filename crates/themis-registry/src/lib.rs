@@ -28,6 +28,16 @@
 //! let artifact: Artifact = // ... build artifact
 //! client.publish(&artifact).await?;
 //!
+
+// Allow missing docs for errors and panics during development
+#![allow(clippy::missing_errors_doc)]
+#![allow(clippy::missing_panics_doc)]
+#![allow(clippy::option_if_let_else)]
+#![allow(clippy::match_same_arms)]
+#![allow(clippy::return_self_not_must_use)]
+#![allow(clippy::self_named_constructors)]
+#![allow(clippy::should_implement_trait)]
+#![allow(clippy::option_map_or_none)]
 //! // Fetch an artifact
 //! let artifact = client.fetch("users-api", "1.0.0").await?;
 //!

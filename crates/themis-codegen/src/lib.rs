@@ -13,6 +13,9 @@
 //! let config = GeneratorConfig::default();
 //! let generator = RustGenerator::new(config);
 //!
+
+// Allow format_push_string in codegen since readability is prioritized over micro-optimization
+#![allow(clippy::format_push_string)]
 //! let output = generator.generate(&contract)?;
 //! println!("{}", output.types);
 //! ```

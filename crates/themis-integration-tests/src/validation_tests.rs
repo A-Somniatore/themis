@@ -9,8 +9,7 @@ use themis_openapi::{parse_openapi, validate_openapi};
 /// Tests that valid contracts pass validation.
 #[test]
 fn test_valid_contract_passes_validation() {
-    let result = validate_openapi(MINIMAL_CONTRACT)
-        .expect("Should validate contract");
+    let result = validate_openapi(MINIMAL_CONTRACT).expect("Should validate contract");
 
     assert!(
         result.errors.is_empty(),
@@ -22,18 +21,20 @@ fn test_valid_contract_passes_validation() {
 /// Tests that users service contract passes validation.
 #[test]
 fn test_users_service_validation() {
-    let result = validate_openapi(USERS_SERVICE_V1)
-        .expect("Should validate contract");
+    let result = validate_openapi(USERS_SERVICE_V1).expect("Should validate contract");
 
     // May have warnings but shouldn't have blocking errors
-    println!("Validation: {} errors, {} warnings", result.errors.len(), result.warnings.len());
+    println!(
+        "Validation: {} errors, {} warnings",
+        result.errors.len(),
+        result.warnings.len()
+    );
 }
 
 /// Tests that secure contract passes validation.
 #[test]
 fn test_secure_contract_validation() {
-    let result = validate_openapi(SECURE_CONTRACT)
-        .expect("Should validate contract");
+    let result = validate_openapi(SECURE_CONTRACT).expect("Should validate contract");
 
     assert!(
         result.errors.is_empty(),
@@ -67,11 +68,12 @@ paths:
         Ok(validation) => {
             // Should have errors about missing operationId
             assert!(
-                !validation.errors.is_empty() || 
-                validation.errors.iter().any(|e| 
-                    e.message.to_lowercase().contains("operationid") || 
-                    e.code.contains("001")
-                ),
+                !validation.errors.is_empty()
+                    || validation.errors.iter().any(|e| e
+                        .message
+                        .to_lowercase()
+                        .contains("operationid")
+                        || e.code.contains("001")),
                 "Should detect missing operationId: {:?}",
                 validation.errors
             );
@@ -91,13 +93,13 @@ paths:
 /// Tests lint with default configuration.
 #[test]
 fn test_lint_default_config() {
-    let contract = parse_openapi(USERS_SERVICE_V1)
-        .expect("Should parse contract");
+    let contract = parse_openapi(USERS_SERVICE_V1).expect("Should parse contract");
 
     let linter = LintReporter::new(LintConfig::default());
     let report = linter.lint(&contract);
 
-    println!("Lint found {} issues ({} errors, {} warnings)",
+    println!(
+        "Lint found {} issues ({} errors, {} warnings)",
         report.issues.len(),
         report.error_count(),
         report.warning_count()
@@ -107,8 +109,7 @@ fn test_lint_default_config() {
 /// Tests lint with strict configuration.
 #[test]
 fn test_lint_strict_config() {
-    let contract = parse_openapi(USERS_SERVICE_V1)
-        .expect("Should parse contract");
+    let contract = parse_openapi(USERS_SERVICE_V1).expect("Should parse contract");
 
     let strict_linter = LintReporter::new(LintConfig::strict());
     let strict_report = strict_linter.lint(&contract);
@@ -117,12 +118,14 @@ fn test_lint_strict_config() {
     let default_report = default_linter.lint(&contract);
 
     // Log what we find
-    println!("Strict: {} issues ({} errors, {} warnings)",
+    println!(
+        "Strict: {} issues ({} errors, {} warnings)",
         strict_report.issues.len(),
         strict_report.error_count(),
         strict_report.warning_count()
     );
-    println!("Default: {} issues ({} errors, {} warnings)",
+    println!(
+        "Default: {} issues ({} errors, {} warnings)",
         default_report.issues.len(),
         default_report.error_count(),
         default_report.warning_count()
@@ -139,8 +142,7 @@ fn test_lint_strict_config() {
 /// Tests lint with relaxed configuration.
 #[test]
 fn test_lint_relaxed_config() {
-    let contract = parse_openapi(USERS_SERVICE_V1)
-        .expect("Should parse contract");
+    let contract = parse_openapi(USERS_SERVICE_V1).expect("Should parse contract");
 
     let relaxed_linter = LintReporter::new(LintConfig::relaxed());
     let relaxed_report = relaxed_linter.lint(&contract);
@@ -156,8 +158,7 @@ fn test_lint_relaxed_config() {
 /// Tests that minimal contract has no lint issues.
 #[test]
 fn test_minimal_contract_lint() {
-    let contract = parse_openapi(MINIMAL_CONTRACT)
-        .expect("Should parse contract");
+    let contract = parse_openapi(MINIMAL_CONTRACT).expect("Should parse contract");
 
     let linter = LintReporter::new(LintConfig::relaxed());
     let report = linter.lint(&contract);
@@ -197,8 +198,7 @@ paths:
           description: Unauthorized
 "#;
 
-    let result = validate_openapi(contract_with_security)
-        .expect("Should validate contract");
+    let result = validate_openapi(contract_with_security).expect("Should validate contract");
 
     // Security is properly defined, should have no errors
     assert!(
@@ -211,8 +211,7 @@ paths:
 /// Tests validation summary.
 #[test]
 fn test_validation_summary() {
-    let result = validate_openapi(USERS_SERVICE_V1)
-        .expect("Should validate contract");
+    let result = validate_openapi(USERS_SERVICE_V1).expect("Should validate contract");
 
     println!("Validation Summary:");
     println!("  Errors: {}", result.errors.len());

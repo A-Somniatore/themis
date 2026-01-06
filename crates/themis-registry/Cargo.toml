@@ -46,6 +46,7 @@ tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 tempfile = "3.0"
 wiremock = "0.6"
 proptest = { workspace = true }
+indexmap = { workspace = true }
 
 [lints]
 workspace = true

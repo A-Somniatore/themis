@@ -12,6 +12,7 @@ themis-core = { path = "../themis-core" }
 serde = { workspace = true }
 serde_json = { workspace = true }
 semver = "1.0"
+indexmap = { workspace = true }
 
 [lints]
 workspace = true

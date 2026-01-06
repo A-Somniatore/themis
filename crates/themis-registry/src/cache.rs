@@ -76,6 +76,10 @@ pub struct ArtifactCache {
 
 impl ArtifactCache {
     /// Creates a new cache with the given configuration.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the cache directory cannot be created.
     pub fn new(config: CacheConfig) -> RegistryResult<Self> {
         // Ensure cache directory exists
         std::fs::create_dir_all(&config.dir).map_err(|e| {
@@ -89,6 +93,10 @@ impl ArtifactCache {
     }
 
     /// Creates a cache with default configuration.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the default cache directory cannot be created.
     pub fn default_cache() -> RegistryResult<Self> {
         Self::new(CacheConfig::default())
     }
@@ -141,6 +149,10 @@ impl ArtifactCache {
     }
 
     /// Stores an artifact in the cache.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the cache directory cannot be created or the file cannot be written.
     pub fn put(
         &self,
         namespace: Option<&str>,
@@ -167,6 +179,10 @@ impl ArtifactCache {
     }
 
     /// Removes an artifact from the cache.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the file cannot be removed.
     pub fn remove(
         &self,
         namespace: Option<&str>,
@@ -316,7 +332,7 @@ mod tests {
                 value: "abc123".to_string(),
             },
             operations: vec![],
-            schemas: std::collections::HashMap::new(),
+            schemas: indexmap::IndexMap::new(),
             raw_contract: None,
         }
     }

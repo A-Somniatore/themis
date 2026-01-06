@@ -2,7 +2,12 @@
 //!
 //! Provides a unified schema representation that can express types from
 //! `OpenAPI`, Protobuf, GraphQL, and `AsyncAPI`.
+//!
+//! Note: This module uses `IndexMap` instead of `HashMap` for deterministic
+//! iteration order, which is important for checksum computation and artifact
+//! reproducibility.
 
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -194,9 +199,9 @@ pub struct ObjectSchema {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
 
-    /// Property definitions
+    /// Property definitions (uses `IndexMap` for deterministic ordering)
     #[serde(default)]
-    pub properties: HashMap<String, Schema>,
+    pub properties: IndexMap<String, Schema>,
 
     /// Required property names
     #[serde(default)]

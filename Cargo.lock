@@ -1718,6 +1718,7 @@ version = "0.1.0"
 dependencies = [
  "base64",
  "chrono",
+ "indexmap",
  "serde",
  "serde_json",
  "sha2",
@@ -1754,6 +1755,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "heck",
+ "indexmap",
  "serde",
  "serde_json",
  "themis-core",
@@ -1764,6 +1766,7 @@ dependencies = [
 name = "themis-compat"
 version = "0.1.0"
 dependencies = [
+ "indexmap",
  "semver",
  "serde",
  "serde_json",
@@ -1775,6 +1778,7 @@ name = "themis-core"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "indexmap",
  "proptest",
  "serde",
  "serde_json",
@@ -1799,12 +1803,14 @@ dependencies = [
  "themis-openapi",
  "themis-registry",
  "tokio",
+ "uuid",
 ]
 
 [[package]]
 name = "themis-lint"
 version = "0.1.0"
 dependencies = [
+ "indexmap",
  "proptest",
  "serde",
  "serde_yaml",
@@ -1848,6 +1854,7 @@ dependencies = [
  "chrono",
  "dirs",
  "hex",
+ "indexmap",
  "proptest",
  "reqwest",
  "serde",

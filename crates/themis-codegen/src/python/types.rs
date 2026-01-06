@@ -9,6 +9,7 @@
 use crate::config::GeneratorConfig;
 use crate::error::CodegenResult;
 use heck::{ToSnakeCase, ToUpperCamelCase};
+use indexmap::IndexMap;
 use std::collections::HashMap;
 use std::fmt::Write;
 use themis_core::schema::{
@@ -32,7 +33,7 @@ impl<'a> PythonTypeGenerator<'a> {
     }
 
     /// Generates Python dataclasses from a map of named schemas.
-    pub fn generate_types(&mut self, schemas: &HashMap<String, Schema>) -> CodegenResult<String> {
+    pub fn generate_types(&mut self, schemas: &IndexMap<String, Schema>) -> CodegenResult<String> {
         let mut output = String::new();
 
         // Generate imports
@@ -209,7 +210,7 @@ impl<'a> PythonTypeGenerator<'a> {
         // or merges properties from inline objects
 
         // Collect all properties from all schemas
-        let mut all_properties: HashMap<String, Schema> = HashMap::new();
+        let mut all_properties: IndexMap<String, Schema> = IndexMap::new();
         let mut all_required: Vec<String> = Vec::new();
         let mut base_classes: Vec<String> = Vec::new();
 
@@ -391,8 +392,8 @@ impl<'a> PythonTypeGenerator<'a> {
         // Check for common formats
         if let Some(format) = &s.format {
             match format.as_str() {
-                "date-time" => return "datetime".to_string(),
-                "date" => return "datetime".to_string(), // Python doesn't have date-only type in typing
+                // Python uses datetime for both date-time and date
+                "date-time" | "date" => return "datetime".to_string(),
                 "uuid" => return "UUID".to_string(),
                 "binary" | "byte" => return "bytes".to_string(),
                 _ => {}
@@ -415,13 +416,13 @@ impl<'a> PythonTypeGenerator<'a> {
             return Ok("dict[str, Any]".to_string());
         }
 
-        let mut parts = Vec::new();
-        for (prop_name, prop_schema) in &obj.properties {
-            let py_type = self.schema_to_py_type(prop_schema)?;
-            parts.push(format!("\"{prop_name}\": {py_type}"));
+        // Generate type information for each property for documentation
+        // but Python doesn't have a literal dict type syntax in typing,
+        // so we return dict[str, Any] for inline objects
+        for (_prop_name, prop_schema) in &obj.properties {
+            // Validate that we can convert each property schema
+            let _py_type = self.schema_to_py_type(prop_schema)?;
         }
-
-        // Python doesn't have a literal dict type syntax in typing
         // For inline, we just use dict[str, Any] or a TypedDict would be needed
         Ok("dict[str, Any]".to_string())
     }
@@ -566,7 +567,7 @@ mod tests {
         let obj = ObjectSchema {
             description: None,
             properties: {
-                let mut props = HashMap::new();
+                let mut props = IndexMap::new();
                 props.insert("id".to_string(), Schema::String(StringSchema::default()));
                 props.insert("name".to_string(), Schema::String(StringSchema::default()));
                 props

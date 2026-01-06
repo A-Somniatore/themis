@@ -137,7 +137,7 @@ impl ArtifactReference {
         // Determine if first part is a registry (contains . or :)
         let first_is_registry = parts
             .first()
-            .map_or(false, |p| p.contains('.') || p.contains(':'));
+            .is_some_and(|p| p.contains('.') || p.contains(':'));
 
         let (registry, namespace, service) = match (parts.len(), first_is_registry) {
             (1, _) => (None, None, parts[0].to_string()),

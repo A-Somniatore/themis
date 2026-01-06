@@ -5,6 +5,7 @@ use crate::error::{ArtifactError, ArtifactResult};
 use crate::operation::ArtifactOperation;
 use base64::{engine::general_purpose::STANDARD, Engine};
 use chrono::Utc;
+use indexmap::IndexMap;
 use std::collections::HashMap;
 use themis_core::{Contract, Schema};
 
@@ -32,7 +33,7 @@ pub struct ArtifactBuilder {
     git_repository: Option<String>,
     owner: Option<String>,
     operations: Vec<ArtifactOperation>,
-    schemas: HashMap<String, Schema>,
+    schemas: IndexMap<String, Schema>,
     raw_contract: Option<Vec<u8>>,
     custom_metadata: HashMap<String, serde_json::Value>,
 }
@@ -404,7 +405,7 @@ mod tests {
                 documentation_url: None,
             },
             operations,
-            schemas: HashMap::new(),
+            schemas: indexmap::IndexMap::new(),
             security_schemes: HashMap::new(),
         };
 

@@ -14,6 +14,10 @@
 //! - `themis fetch` - Fetch artifact from registry
 //! - `themis versions` - List versions of a service
 
+// CLI args commonly have many bools
+#![allow(clippy::struct_excessive_bools)]
+#![allow(clippy::uninlined_format_args)]
+
 use clap::{Parser, Subcommand};
 use tracing_subscriber::EnvFilter;
 

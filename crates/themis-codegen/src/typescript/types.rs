@@ -9,6 +9,7 @@
 use crate::config::GeneratorConfig;
 use crate::error::CodegenResult;
 use heck::{ToLowerCamelCase, ToUpperCamelCase};
+use indexmap::IndexMap;
 use std::collections::HashMap;
 use std::fmt::Write;
 use themis_core::schema::{
@@ -32,7 +33,7 @@ impl<'a> TypeScriptTypeGenerator<'a> {
     }
 
     /// Generates TypeScript interfaces from a map of named schemas.
-    pub fn generate_types(&mut self, schemas: &HashMap<String, Schema>) -> CodegenResult<String> {
+    pub fn generate_types(&mut self, schemas: &IndexMap<String, Schema>) -> CodegenResult<String> {
         let mut output = String::new();
 
         // Generate header comment
@@ -447,7 +448,7 @@ mod tests {
         let obj = ObjectSchema {
             description: None,
             properties: {
-                let mut props = HashMap::new();
+                let mut props = IndexMap::new();
                 props.insert("id".to_string(), Schema::String(StringSchema::default()));
                 props.insert("name".to_string(), Schema::String(StringSchema::default()));
                 props

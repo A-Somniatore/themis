@@ -631,7 +631,7 @@ impl CodeGenerator for RustGenerator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::HashMap;
+    use indexmap::IndexMap;
     use themis_core::contract::ContractFormat;
     use themis_core::operation::HttpMethod;
     use themis_core::schema::{ObjectSchema, StringSchema};
@@ -650,7 +650,7 @@ mod tests {
             Schema::Object(ObjectSchema {
                 description: Some("A user".to_string()),
                 properties: {
-                    let mut props = HashMap::new();
+                    let mut props = IndexMap::new();
                     props.insert(
                         "id".to_string(),
                         Schema::String(StringSchema {
@@ -689,7 +689,7 @@ mod tests {
             "User".to_string(),
             Schema::Object(ObjectSchema {
                 properties: {
-                    let mut props = HashMap::new();
+                    let mut props = IndexMap::new();
                     props.insert(
                         "id".to_string(),
                         Schema::String(StringSchema {

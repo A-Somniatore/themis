@@ -52,7 +52,7 @@ pub type ConfigResult<T> = Result<T, ConfigError>;
 /// File-based lint configuration.
 ///
 /// This structure represents the configuration loaded from a `.themis-lint.yaml` file.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct LintConfigFile {
     /// Base configuration to extend from.
@@ -63,15 +63,6 @@ pub struct LintConfigFile {
     /// Per-rule configuration overrides.
     #[serde(default)]
     pub rules: HashMap<String, RuleConfigFile>,
-}
-
-impl Default for LintConfigFile {
-    fn default() -> Self {
-        Self {
-            extends: None,
-            rules: HashMap::new(),
-        }
-    }
 }
 
 /// Per-rule configuration in the file format.
@@ -87,7 +78,7 @@ pub struct RuleConfigFile {
     pub severity: String,
 }
 
-fn default_enabled() -> bool {
+const fn default_enabled() -> bool {
     true
 }
 
@@ -118,7 +109,7 @@ impl LintConfigFile {
     /// Returns an error if the file cannot be read or parsed.
     pub fn from_file(path: &Path) -> ConfigResult<Self> {
         let content = std::fs::read_to_string(path)?;
-        Self::from_str(&content)
+        Self::parse(&content)
     }
 
     /// Parses configuration from a YAML string.
@@ -126,8 +117,8 @@ impl LintConfigFile {
     /// # Errors
     ///
     /// Returns an error if the YAML is invalid.
-    pub fn from_str(content: &str) -> ConfigResult<Self> {
-        let config: LintConfigFile = serde_yaml::from_str(content)?;
+    pub fn parse(content: &str) -> ConfigResult<Self> {
+        let config: Self = serde_yaml::from_str(content)?;
         Ok(config)
     }
 
@@ -197,8 +188,8 @@ impl LintConfigFile {
 fn parse_severity(s: &str) -> Severity {
     match s.to_lowercase().as_str() {
         "error" => Severity::Error,
-        "warning" | "warn" => Severity::Warning,
         "info" | "hint" => Severity::Info,
+        // Default to warning for unknown values including "warning" and "warn"
         _ => Severity::Warning,
     }
 }
@@ -226,7 +217,7 @@ mod tests {
     #[test]
     fn test_parse_empty_config() {
         let yaml = "";
-        let config = LintConfigFile::from_str(yaml).unwrap();
+        let config = LintConfigFile::parse(yaml).unwrap();
         assert!(config.extends.is_none());
         assert!(config.rules.is_empty());
     }
@@ -236,7 +227,7 @@ mod tests {
         let yaml = r#"
 extends: default
 "#;
-        let config = LintConfigFile::from_str(yaml).unwrap();
+        let config = LintConfigFile::parse(yaml).unwrap();
         assert_eq!(config.extends, Some("default".to_string()));
     }
 
@@ -245,7 +236,7 @@ extends: default
         let yaml = r#"
 extends: strict
 "#;
-        let config = LintConfigFile::from_str(yaml).unwrap();
+        let config = LintConfigFile::parse(yaml).unwrap();
         let lint_config = config.to_lint_config().unwrap();
 
         // All rules should be errors in strict mode
@@ -261,7 +252,7 @@ extends: strict
         let yaml = r#"
 extends: relaxed
 "#;
-        let config = LintConfigFile::from_str(yaml).unwrap();
+        let config = LintConfigFile::parse(yaml).unwrap();
         let lint_config = config.to_lint_config().unwrap();
 
         // All rules should be warnings in relaxed mode
@@ -277,7 +268,7 @@ extends: relaxed
         let yaml = r#"
 extends: unknown
 "#;
-        let config = LintConfigFile::from_str(yaml).unwrap();
+        let config = LintConfigFile::parse(yaml).unwrap();
         let result = config.to_lint_config();
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), ConfigError::UnknownBase(_)));
@@ -291,7 +282,7 @@ rules:
     enabled: true
     severity: error
 "#;
-        let config = LintConfigFile::from_str(yaml).unwrap();
+        let config = LintConfigFile::parse(yaml).unwrap();
         let lint_config = config.to_lint_config().unwrap();
 
         let rule = lint_config.get_rule_config("naming/operation-id");
@@ -306,7 +297,7 @@ rules:
   naming/operation-id:
     enabled: false
 "#;
-        let config = LintConfigFile::from_str(yaml).unwrap();
+        let config = LintConfigFile::parse(yaml).unwrap();
         let lint_config = config.to_lint_config().unwrap();
 
         let rule = lint_config.get_rule_config("naming/operation-id");
@@ -341,7 +332,7 @@ rules:
   docs/operation-summary:
     enabled: false
 "#;
-        let config = LintConfigFile::from_str(yaml).unwrap();
+        let config = LintConfigFile::parse(yaml).unwrap();
         let lint_config = config.to_lint_config().unwrap();
 
         // Check operation-id
@@ -444,7 +435,7 @@ rules:
     #[test]
     fn test_invalid_yaml() {
         let yaml = "invalid: yaml: content:";
-        let result = LintConfigFile::from_str(yaml);
+        let result = LintConfigFile::parse(yaml);
         assert!(result.is_err());
     }
 

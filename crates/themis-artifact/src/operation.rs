@@ -1,5 +1,6 @@
 //! Operation types for artifacts.
 
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use themis_core::Schema;
@@ -33,8 +34,8 @@ pub struct ArtifactOperation {
     pub request_schema: Option<Schema>,
 
     /// Response schemas by status code.
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    pub response_schemas: HashMap<String, Schema>,
+    #[serde(default, skip_serializing_if = "IndexMap::is_empty")]
+    pub response_schemas: IndexMap<String, Schema>,
 
     /// Operation-specific metadata.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -80,7 +81,7 @@ impl ArtifactOperation {
             description: None,
             security: Vec::new(),
             request_schema: None,
-            response_schemas: HashMap::new(),
+            response_schemas: IndexMap::new(),
             metadata: None,
             tags: Vec::new(),
             deprecated: false,

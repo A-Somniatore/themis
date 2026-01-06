@@ -3,6 +3,7 @@
 use crate::error::{ArtifactError, ArtifactResult};
 use crate::operation::ArtifactOperation;
 use chrono::{DateTime, Utc};
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
@@ -42,9 +43,9 @@ pub struct Artifact {
     /// All operations defined in the contract.
     pub operations: Vec<ArtifactOperation>,
 
-    /// Named schemas referenced by operations.
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    pub schemas: HashMap<String, Schema>,
+    /// Named schemas referenced by operations (uses IndexMap for deterministic ordering).
+    #[serde(default, skip_serializing_if = "IndexMap::is_empty")]
+    pub schemas: IndexMap<String, Schema>,
 
     /// Base64-encoded original contract source.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -196,7 +197,7 @@ struct HashableArtifact<'a> {
     format: &'a str,
     format_version: &'a str,
     operations: &'a [ArtifactOperation],
-    schemas: &'a HashMap<String, Schema>,
+    schemas: &'a IndexMap<String, Schema>,
     raw_contract: Option<&'a str>,
 }
 
@@ -225,7 +226,7 @@ mod tests {
             metadata: ArtifactMetadata::default(),
             checksum: Checksum::sha256("placeholder"),
             operations: vec![ArtifactOperation::new("getUser", "GET", "/users/{userId}")],
-            schemas: HashMap::new(),
+            schemas: IndexMap::new(),
             raw_contract: None,
         }
     }

@@ -3,6 +3,7 @@
 //! The [`Contract`] struct is the central data structure in Themis, representing
 //! any API contract regardless of its source format (`OpenAPI`, Protobuf, GraphQL, etc.).
 
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -91,7 +92,7 @@ pub struct Contract {
     pub operations: HashMap<String, Operation>,
 
     /// All schemas defined in this contract, keyed by schema name
-    pub schemas: HashMap<String, Schema>,
+    pub schemas: IndexMap<String, Schema>,
 
     /// Security schemes available in this contract
     pub security_schemes: HashMap<String, SecurityScheme>,
@@ -111,7 +112,7 @@ impl Contract {
                 documentation_url: None,
             },
             operations: HashMap::new(),
-            schemas: HashMap::new(),
+            schemas: IndexMap::new(),
             security_schemes: HashMap::new(),
         }
     }
