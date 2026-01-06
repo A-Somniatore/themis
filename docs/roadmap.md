@@ -1,10 +1,10 @@
 # Themis – Development Roadmap
 
-> **Version**: 1.12.0  
+> **Version**: 1.13.0  
 > **Created**: 2026-01-04  
 > **Last Updated**: 2026-01-06  
 > **Target Completion**: Week 14 (MVP)
-> **Current Progress**: Phase T5 In Progress (Week 13)
+> **Current Progress**: Phase T5 In Progress (Week 13) - Integration Test Suite Complete
 
 ---
 
@@ -448,11 +448,24 @@ themis-platform/
 
 ---
 
-## Phase T5: Integration Testing (Weeks 13-14) ⭐ NEW
+## Phase T5: Integration Testing (Weeks 13-14) ⭐ IN PROGRESS
 
 > **Purpose**: Validate that Themis artifacts work correctly with Archimedes and Eunomia.
 
-### Week 13: Archimedes Integration
+### Week 13: Integration Test Suite ✅
+
+- [x] Create `themis-integration-tests` crate
+  > **Completed 2026-01-06**: Created crate with 35 integration tests
+- [x] Implement workflow tests
+  > **Completed 2026-01-06**: Full workflow, version comparison, breaking change detection
+- [x] Implement validation tests
+  > **Completed 2026-01-06**: Contract validation, lint configs (default/strict/relaxed)
+- [x] Implement codegen tests
+  > **Completed 2026-01-06**: Rust, TypeScript, Python generation tests
+- [x] Implement artifact tests
+  > **Completed 2026-01-06**: Artifact creation, round-trip, checksums
+
+### Week 14: Archimedes Integration (Pending)
 
 - [ ] Test artifact loading in Archimedes
 - [ ] Verify operation → handler mapping
@@ -463,7 +476,6 @@ themis-platform/
 
 ### Week 14: End-to-End Testing
 
-- [ ] Create integration test suite
 - [ ] Test full workflow: contract → artifact → Archimedes validation
 - [ ] Test policy context includes correct operation metadata
 - [ ] Verify `PolicyInput.operation_id` matches Themis operationId
@@ -473,6 +485,7 @@ themis-platform/
 ### Phase T5 Milestone
 
 **Criteria**: Themis artifacts work seamlessly with Archimedes runtime
+**Current Status**: Integration test suite complete (35 tests), Archimedes integration pending
 
 ---
 
