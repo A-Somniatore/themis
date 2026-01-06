@@ -1,0 +1,28 @@
+[package]
+name = "themis-integration-tests"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish = false
+
+[dependencies]
+# Workspace crates
+themis-core = { workspace = true }
+themis-openapi = { workspace = true }
+themis-lint = { workspace = true }
+themis-compat = { workspace = true }
+themis-codegen = { workspace = true }
+themis-artifact = { workspace = true }
+themis-registry = { workspace = true }
+
+# Dependencies
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+tempfile = "3.10"
+tokio = { workspace = true }
+
+[lints]
+workspace = true

@@ -1784,6 +1784,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "themis-integration-tests"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "themis-artifact",
+ "themis-codegen",
+ "themis-compat",
+ "themis-core",
+ "themis-lint",
+ "themis-openapi",
+ "themis-registry",
+ "tokio",
+]
+
+[[package]]
 name = "themis-lint"
 version = "0.1.0"
 dependencies = [

@@ -9,6 +9,7 @@ members = [
     "crates/themis-cli",
     "crates/themis-artifact",
     "crates/themis-registry",
+    "crates/themis-integration-tests",
 ]
 
 [workspace.package]
