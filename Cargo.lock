@@ -1792,6 +1792,7 @@ name = "themis-integration-tests"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "indexmap",
  "serde",
  "serde_json",
  "tempfile",

@@ -449,8 +449,8 @@ mod tests {
             .expect("Should create artifact");
 
         let mut loader = MockArtifactLoader::new();
-        let service = artifact.service.clone();
-        let version = artifact.version.clone();
+        let _service = artifact.service.clone();
+        let _version = artifact.version.clone();
         loader.load(artifact).expect("Should load artifact");
 
         // Try to get an operation (if any exist)

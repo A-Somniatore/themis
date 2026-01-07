@@ -22,6 +22,7 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 anyhow = { workspace = true }
 uuid = { workspace = true }
+indexmap = "2.0"
 tempfile = "3.10"
 tokio = { workspace = true }
 
