@@ -80,6 +80,46 @@ impl<'a> ReferenceResolver<'a> {
             })
     }
 
+    /// Resolves a response reference (e.g., "#/components/responses/NotFound").
+    fn resolve_response(&self, ref_path: &str) -> ThemisResult<&'a openapiv3::Response> {
+        let response_name = Self::extract_component_name(ref_path, "responses")?;
+
+        self.openapi
+            .components
+            .as_ref()
+            .and_then(|c| c.responses.get(response_name))
+            .and_then(|resp| match resp {
+                ReferenceOr::Item(response) => Some(response),
+                ReferenceOr::Reference { .. } => {
+                    // Nested references are not supported
+                    None
+                }
+            })
+            .ok_or_else(|| ThemisError::SchemaValidation {
+                message: format!("Unresolved response reference: {ref_path}"),
+            })
+    }
+
+    /// Resolves a header reference (e.g., "#/components/headers/X-Rate-Limit").
+    fn resolve_header(&self, ref_path: &str) -> ThemisResult<&'a openapiv3::Header> {
+        let header_name = Self::extract_component_name(ref_path, "headers")?;
+
+        self.openapi
+            .components
+            .as_ref()
+            .and_then(|c| c.headers.get(header_name))
+            .and_then(|h| match h {
+                ReferenceOr::Item(header) => Some(header),
+                ReferenceOr::Reference { .. } => {
+                    // Nested references are not supported
+                    None
+                }
+            })
+            .ok_or_else(|| ThemisError::SchemaValidation {
+                message: format!("Unresolved header reference: {ref_path}"),
+            })
+    }
+
     /// Extracts the component name from a JSON pointer reference.
     ///
     /// E.g., "#/components/parameters/UserIdParam" -> "UserIdParam"
@@ -275,8 +315,8 @@ fn convert_path_item_to_operations(
         let param = match param_ref {
             ReferenceOr::Item(param) => convert_parameter(param),
             ReferenceOr::Reference { reference } => {
-                let resolved = resolver.resolve_parameter(reference)?;
-                convert_parameter(resolved)
+                let found_param = resolver.resolve_parameter(reference)?;
+                convert_parameter(found_param)
             }
         };
         common_params.push(param);
@@ -350,8 +390,8 @@ fn convert_operation(
         let param = match param_ref {
             ReferenceOr::Item(param) => convert_parameter(param),
             ReferenceOr::Reference { reference } => {
-                let resolved = resolver.resolve_parameter(reference)?;
-                convert_parameter(resolved)
+                let found_param = resolver.resolve_parameter(reference)?;
+                convert_parameter(found_param)
             }
         };
         parameters.push(param);
@@ -361,25 +401,38 @@ fn convert_operation(
     let request_body = match &op.request_body {
         Some(ReferenceOr::Item(body)) => Some(convert_request_body(body)),
         Some(ReferenceOr::Reference { reference }) => {
-            let resolved = resolver.resolve_request_body(reference)?;
-            Some(convert_request_body(resolved))
+            let found_body = resolver.resolve_request_body(reference)?;
+            Some(convert_request_body(found_body))
         }
         None => None,
     };
 
-    // Convert responses
+    // Convert responses (including referenced ones)
     let mut responses = HashMap::new();
     for (status, response_ref) in &op.responses.responses {
-        if let ReferenceOr::Item(response) = response_ref {
-            let status_str = match status {
-                StatusCode::Code(code) => code.to_string(),
-                StatusCode::Range(r) => format!("{r}XX"),
-            };
-            responses.insert(status_str, convert_response(response));
-        }
+        let response = match response_ref {
+            ReferenceOr::Item(resp) => convert_response(resp, resolver),
+            ReferenceOr::Reference { reference } => {
+                let found_resp = resolver.resolve_response(reference)?;
+                convert_response(found_resp, resolver)
+            }
+        };
+        let status_str = match status {
+            StatusCode::Code(code) => code.to_string(),
+            StatusCode::Range(r) => format!("{r}XX"),
+        };
+        responses.insert(status_str, response);
     }
-    if let Some(ReferenceOr::Item(response)) = &op.responses.default {
-        responses.insert("default".to_string(), convert_response(response));
+    // Handle default response (including referenced ones)
+    if let Some(default_ref) = &op.responses.default {
+        let default_response = match default_ref {
+            ReferenceOr::Item(resp) => convert_response(resp, resolver),
+            ReferenceOr::Reference { reference } => {
+                let found_resp = resolver.resolve_response(reference)?;
+                convert_response(found_resp, resolver)
+            }
+        };
+        responses.insert("default".to_string(), default_response);
     }
 
     // Convert security requirements
@@ -471,7 +524,7 @@ fn convert_request_body(body: &openapiv3::RequestBody) -> RequestBody {
 }
 
 /// Converts an OpenAPI response to a Themis response.
-fn convert_response(response: &openapiv3::Response) -> Response {
+fn convert_response(response: &openapiv3::Response, resolver: &ReferenceResolver<'_>) -> Response {
     let mut content = HashMap::new();
 
     for (media_type_name, media_type) in &response.content {
@@ -488,7 +541,13 @@ fn convert_response(response: &openapiv3::Response) -> Response {
 
     let mut headers = HashMap::new();
     for (header_name, header_ref) in &response.headers {
-        if let ReferenceOr::Item(header) = header_ref {
+        // Handle both inline headers and header references
+        let header_opt = match header_ref {
+            ReferenceOr::Item(header) => Some(header),
+            ReferenceOr::Reference { reference } => resolver.resolve_header(reference).ok(),
+        };
+
+        if let Some(header) = header_opt {
             if let openapiv3::ParameterSchemaOrContent::Schema(s) = &header.format {
                 let schema = match s {
                     ReferenceOr::Item(schema) => convert_schema(schema),
