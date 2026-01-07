@@ -26,23 +26,28 @@ pub struct RegistryClient {
 
 impl RegistryClient {
     /// Creates a new registry client with the given configuration.
-    #[must_use]
-    pub fn new(config: RegistryConfig) -> Self {
+    ///
+    /// # Errors
+    ///
+    /// Returns `RegistryError::HttpClientError` if the HTTP client fails to initialize.
+    /// This can happen if the timeout configuration is invalid or if TLS
+    /// initialization fails (rare).
+    pub fn new(config: RegistryConfig) -> RegistryResult<Self> {
         let http = Client::builder()
             .timeout(Duration::from_secs(config.timeout_secs))
             .build()
-            .expect("failed to create HTTP client");
+            .map_err(|e| RegistryError::HttpClientError(e.to_string()))?;
 
         let cache = config
             .cache_dir
             .as_ref()
             .and_then(|dir| ArtifactCache::new(CacheConfig::new(dir)).ok());
 
-        Self {
+        Ok(Self {
             config,
             http,
             cache,
-        }
+        })
     }
 
     /// Creates a client with a custom HTTP client.
@@ -72,7 +77,7 @@ impl RegistryClient {
     /// # Example
     ///
     /// ```ignore
-    /// let client = RegistryClient::new(config);
+    /// let client = RegistryClient::new(config)?;
     /// client.publish(&artifact).await?;
     /// ```
     pub async fn publish(&self, artifact: &Artifact) -> RegistryResult<()> {
@@ -519,7 +524,7 @@ mod tests {
         let config = RegistryConfig::new(server.address().to_string())
             .with_https(false)
             .with_namespace("test-org");
-        let client = RegistryClient::new(config);
+        let client = RegistryClient::new(config).expect("test client creation");
         (server, client)
     }
 
@@ -601,7 +606,7 @@ mod tests {
             .with_namespace("my-org")
             .with_token("test-token");
 
-        let client = RegistryClient::new(config);
+        let client = RegistryClient::new(config).expect("client creation");
         // Just verify it doesn't panic
         assert!(client.cache().is_none()); // No cache dir set
     }
@@ -609,7 +614,7 @@ mod tests {
     #[test]
     fn test_repository_with_namespace() {
         let config = RegistryConfig::new("ghcr.io").with_namespace("my-org");
-        let client = RegistryClient::new(config);
+        let client = RegistryClient::new(config).expect("client creation");
         let reference = ArtifactReference::new("users-api");
         assert_eq!(client.repository(&reference), "my-org/users-api");
     }
@@ -617,7 +622,7 @@ mod tests {
     #[test]
     fn test_repository_without_namespace() {
         let config = RegistryConfig::new("ghcr.io");
-        let client = RegistryClient::new(config);
+        let client = RegistryClient::new(config).expect("client creation");
         let reference = ArtifactReference::new("users-api");
         assert_eq!(client.repository(&reference), "users-api");
     }

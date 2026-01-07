@@ -22,7 +22,7 @@
 //! let config = RegistryConfig::new("registry.example.com")
 //!     .with_namespace("my-org")
 //!     .with_auth_token("xxx");
-//! let client = RegistryClient::new(config);
+//! let client = RegistryClient::new(config)?;
 //!
 //! // Publish an artifact
 //! let artifact: Artifact = // ... build artifact
@@ -53,7 +53,7 @@
 //! ```ignore
 //! let config = RegistryConfig::new("registry.example.com")
 //!     .with_cache_dir("~/.themis/cache");
-//! let client = RegistryClient::new(config);
+//! let client = RegistryClient::new(config)?;
 //!
 //! // Will use cache if available
 //! let artifact = client.fetch_cached("users-api", "1.0.0").await?;

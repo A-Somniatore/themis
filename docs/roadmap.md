@@ -1,10 +1,10 @@
 # Themis – Development Roadmap
 
-> **Version**: 1.13.0  
+> **Version**: 1.14.0  
 > **Created**: 2026-01-04  
-> **Last Updated**: 2026-01-06  
-> **Target Completion**: Week 14 (MVP)
-> **Current Progress**: Phase T5 COMPLETE ✅ - Integration Testing Finished (407 tests)
+> **Last Updated**: 2026-01-07  
+> **Target Completion**: Week 15 (MVP + Hardening)
+> **Current Progress**: Phase T5.5 IN PROGRESS ⭐ - Tech Debt & Hardening (407 tests)
 
 ---
 
@@ -504,16 +504,78 @@ themis-platform/
 
 ---
 
+## Phase T5.5: Tech Debt & Hardening (Week 15) ⭐ IN PROGRESS
+
+> **Purpose**: Address technical debt identified in architecture review before proceeding to post-MVP features.
+> **Source**: Senior architect code review (2026-01-07)
+
+### Critical (P0) - Must Fix Before Production
+
+- [ ] Remove `.expect()` calls from production code
+  - [ ] Fix `themis-registry/src/client.rs:34` - HTTP client creation
+  - [ ] Fix `themis-registry/src/config.rs:306-307` - Base64/UTF8 decoding
+  > **Impact**: These will panic in production on error conditions
+- [ ] Add `cargo audit` to CI pipeline
+  - [ ] Install cargo-audit in GitHub Actions
+  - [ ] Add security vulnerability check step
+  > **Impact**: No automated security vulnerability detection
+- [ ] Implement or explicitly fail `$ref` resolution in OpenAPI parser
+  - [ ] `themis-openapi/src/parser.rs:203` - TODO for ref resolution
+  - [ ] `themis-openapi/src/parser.rs:279` - TODO for ref resolution
+  > **Impact**: Complex OpenAPI specs with references may not parse correctly
+
+### High Priority (P1) - Before V1 Release
+
+- [ ] Implement security lint rules (THEMIS010+)
+  - [ ] `themis-lint/src/rules/security.rs` - Currently empty TODO
+  - [ ] Check for API key in query params
+  - [ ] Check for sensitive data exposure patterns
+  - [ ] Check for missing security scheme validation
+- [ ] Implement versioning lint rules
+  - [ ] `themis-lint/src/rules/versioning.rs` - Currently empty TODO
+  - [ ] Check version format compliance
+  - [ ] Check deprecation markers
+  - [ ] Check sunset dates
+
+### Moderate Priority (P2) - Code Quality
+
+- [ ] Add MSRV (1.75) testing to CI
+- [ ] Update outdated dependencies (indexmap, serde_json minor versions)
+- [ ] Consider refactoring large generator files (>1000 lines each):
+  - `python/generator.rs` - 1,070 lines
+  - `typescript/generator.rs` - 1,034 lines
+  - `rust/generator.rs` - 944 lines
+
+### Tech Debt Summary (from code review)
+
+| Item | Location | Severity | Status |
+|------|----------|----------|--------|
+| `.expect()` in HTTP client | `client.rs:34` | P0 | ❌ |
+| `.expect()` in config | `config.rs:306-307` | P0 | ❌ |
+| No cargo audit | CI | P0 | ❌ |
+| Missing $ref resolution | `parser.rs:203,279` | P0 | ❌ |
+| Empty security rules | `security.rs` | P1 | ❌ |
+| Empty versioning rules | `versioning.rs` | P1 | ❌ |
+| Empty normalizer | `normalizer.rs` | P2 | ❌ |
+| Large generator files | codegen crate | P2 | ❌ |
+
+### Phase T5.5 Milestone
+
+**Criteria**: All P0 issues resolved, P1 issues addressed, code passes `cargo audit`
+
+---
+
 ## Milestones Summary
 
-| Milestone         | Target  | Criteria                                |
-| ----------------- | ------- | --------------------------------------- |
-| T0: Shared Types  | Week 1  | Platform types crate published          |
-| T1: Parsing       | Week 4  | OpenAPI specs parsed correctly          |
-| T2: Compatibility | Week 6  | Breaking changes detected               |
-| T3: Code Gen      | Week 10 | Rust, TypeScript, Python code generated |
-| T4: Publishing    | Week 12 | Artifacts published to registry         |
-| T5: Integration   | Week 14 | End-to-end testing with Archimedes      |
+| Milestone          | Target   | Criteria                                |
+| ------------------ | -------- | --------------------------------------- |
+| T0: Shared Types   | Week 1   | Platform types crate published          |
+| T1: Parsing        | Week 4   | OpenAPI specs parsed correctly          |
+| T2: Compatibility  | Week 6   | Breaking changes detected               |
+| T3: Code Gen       | Week 10  | Rust, TypeScript, Python code generated |
+| T4: Publishing     | Week 12  | Artifacts published to registry         |
+| T5: Integration    | Week 14  | End-to-end testing with Archimedes      |
+| T5.5: Hardening    | Week 15  | Tech debt resolved, cargo audit passes  |
 
 ---
 

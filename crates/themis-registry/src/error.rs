@@ -10,6 +10,10 @@ pub type RegistryResult<T> = Result<T, RegistryError>;
 #[derive(Debug, Error)]
 #[non_exhaustive]
 pub enum RegistryError {
+    /// Failed to create HTTP client.
+    #[error("failed to create HTTP client: {0}")]
+    HttpClientError(String),
+
     /// The artifact was not found in the registry.
     #[error("artifact not found: {service}@{version}")]
     NotFound {

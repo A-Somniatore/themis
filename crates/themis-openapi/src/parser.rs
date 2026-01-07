@@ -27,6 +27,78 @@ use themis_core::{
     ThemisError, ThemisResult,
 };
 
+/// Reference resolver for OpenAPI components.
+///
+/// Resolves `$ref` pointers to their actual definitions in the components section.
+struct ReferenceResolver<'a> {
+    openapi: &'a OpenAPI,
+}
+
+impl<'a> ReferenceResolver<'a> {
+    fn new(openapi: &'a OpenAPI) -> Self {
+        Self { openapi }
+    }
+
+    /// Resolves a parameter reference (e.g., "#/components/parameters/UserIdParam").
+    fn resolve_parameter(&self, reference: &str) -> ThemisResult<&'a OpenApiParameter> {
+        // Parse the reference path
+        let name = self.extract_component_name(reference, "parameters")?;
+
+        self.openapi
+            .components
+            .as_ref()
+            .and_then(|c| c.parameters.get(name))
+            .and_then(|p| match p {
+                ReferenceOr::Item(param) => Some(param),
+                ReferenceOr::Reference { .. } => {
+                    // Nested references are not supported
+                    None
+                }
+            })
+            .ok_or_else(|| ThemisError::SchemaValidation {
+                message: format!("Unresolved parameter reference: {reference}"),
+            })
+    }
+
+    /// Resolves a request body reference (e.g., "#/components/requestBodies/CreateUser").
+    fn resolve_request_body(&self, reference: &str) -> ThemisResult<&'a openapiv3::RequestBody> {
+        let name = self.extract_component_name(reference, "requestBodies")?;
+
+        self.openapi
+            .components
+            .as_ref()
+            .and_then(|c| c.request_bodies.get(name))
+            .and_then(|rb| match rb {
+                ReferenceOr::Item(body) => Some(body),
+                ReferenceOr::Reference { .. } => {
+                    // Nested references are not supported
+                    None
+                }
+            })
+            .ok_or_else(|| ThemisError::SchemaValidation {
+                message: format!("Unresolved request body reference: {reference}"),
+            })
+    }
+
+    /// Extracts the component name from a JSON pointer reference.
+    ///
+    /// E.g., "#/components/parameters/UserIdParam" -> "UserIdParam"
+    fn extract_component_name<'b>(
+        &self,
+        reference: &'b str,
+        expected_type: &str,
+    ) -> ThemisResult<&'b str> {
+        let prefix = format!("#/components/{expected_type}/");
+        reference
+            .strip_prefix(&prefix)
+            .ok_or_else(|| ThemisError::SchemaValidation {
+                message: format!(
+                    "Invalid {expected_type} reference format: {reference}. Expected format: {prefix}<name>"
+                ),
+            })
+    }
+}
+
 /// Parses an OpenAPI 3.1 specification from a string.
 ///
 /// # Arguments
@@ -107,6 +179,9 @@ fn convert_openapi_to_contract(openapi: &OpenAPI) -> ThemisResult<Contract> {
     // Parse version from info.version
     let version = parse_api_version(&openapi.info.version)?;
 
+    // Create reference resolver for component lookups
+    let resolver = ReferenceResolver::new(openapi);
+
     // Create contract metadata
     let metadata = ContractMetadata {
         service_name: openapi.info.title.clone(),
@@ -148,7 +223,7 @@ fn convert_openapi_to_contract(openapi: &OpenAPI) -> ThemisResult<Contract> {
     // Convert paths to operations
     for (path, path_item_ref) in &openapi.paths.paths {
         if let ReferenceOr::Item(path_item) = path_item_ref {
-            convert_path_item_to_operations(&mut contract, path, path_item)?;
+            convert_path_item_to_operations(&mut contract, path, path_item, &resolver)?;
         }
     }
 
@@ -193,16 +268,20 @@ fn convert_path_item_to_operations(
     contract: &mut Contract,
     path: &str,
     path_item: &PathItem,
+    resolver: &ReferenceResolver,
 ) -> ThemisResult<()> {
     // Common parameters for all operations on this path
-    let common_params: Vec<Parameter> = path_item
-        .parameters
-        .iter()
-        .filter_map(|p| match p {
-            ReferenceOr::Item(param) => Some(convert_parameter(param)),
-            ReferenceOr::Reference { .. } => None, // TODO: Resolve refs
-        })
-        .collect();
+    let mut common_params: Vec<Parameter> = Vec::new();
+    for param_ref in &path_item.parameters {
+        let param = match param_ref {
+            ReferenceOr::Item(param) => convert_parameter(param),
+            ReferenceOr::Reference { reference } => {
+                let resolved = resolver.resolve_parameter(reference)?;
+                convert_parameter(resolved)
+            }
+        };
+        common_params.push(param);
+    }
 
     // Helper to insert operation and check for duplicates
     let mut insert_operation = |operation: Operation| -> ThemisResult<()> {
@@ -218,31 +297,31 @@ fn convert_path_item_to_operations(
 
     // Convert each HTTP method
     if let Some(op) = &path_item.get {
-        let operation = convert_operation(op, path, HttpMethod::Get, &common_params)?;
+        let operation = convert_operation(op, path, HttpMethod::Get, &common_params, resolver)?;
         insert_operation(operation)?;
     }
     if let Some(op) = &path_item.post {
-        let operation = convert_operation(op, path, HttpMethod::Post, &common_params)?;
+        let operation = convert_operation(op, path, HttpMethod::Post, &common_params, resolver)?;
         insert_operation(operation)?;
     }
     if let Some(op) = &path_item.put {
-        let operation = convert_operation(op, path, HttpMethod::Put, &common_params)?;
+        let operation = convert_operation(op, path, HttpMethod::Put, &common_params, resolver)?;
         insert_operation(operation)?;
     }
     if let Some(op) = &path_item.patch {
-        let operation = convert_operation(op, path, HttpMethod::Patch, &common_params)?;
+        let operation = convert_operation(op, path, HttpMethod::Patch, &common_params, resolver)?;
         insert_operation(operation)?;
     }
     if let Some(op) = &path_item.delete {
-        let operation = convert_operation(op, path, HttpMethod::Delete, &common_params)?;
+        let operation = convert_operation(op, path, HttpMethod::Delete, &common_params, resolver)?;
         insert_operation(operation)?;
     }
     if let Some(op) = &path_item.head {
-        let operation = convert_operation(op, path, HttpMethod::Head, &common_params)?;
+        let operation = convert_operation(op, path, HttpMethod::Head, &common_params, resolver)?;
         insert_operation(operation)?;
     }
     if let Some(op) = &path_item.options {
-        let operation = convert_operation(op, path, HttpMethod::Options, &common_params)?;
+        let operation = convert_operation(op, path, HttpMethod::Options, &common_params, resolver)?;
         insert_operation(operation)?;
     }
 
@@ -255,6 +334,7 @@ fn convert_operation(
     path: &str,
     method: HttpMethod,
     common_params: &[Parameter],
+    resolver: &ReferenceResolver,
 ) -> ThemisResult<Operation> {
     // operationId is required in Themis
     let operation_id = op
@@ -265,19 +345,28 @@ fn convert_operation(
             context: format!("{method} {path}"),
         })?;
 
-    // Convert parameters
+    // Convert parameters (including referenced ones)
     let mut parameters: Vec<Parameter> = common_params.to_vec();
     for param_ref in &op.parameters {
-        if let ReferenceOr::Item(param) = param_ref {
-            parameters.push(convert_parameter(param));
-        }
+        let param = match param_ref {
+            ReferenceOr::Item(param) => convert_parameter(param),
+            ReferenceOr::Reference { reference } => {
+                let resolved = resolver.resolve_parameter(reference)?;
+                convert_parameter(resolved)
+            }
+        };
+        parameters.push(param);
     }
 
-    // Convert request body
-    let request_body = op.request_body.as_ref().and_then(|rb| match rb {
-        ReferenceOr::Item(body) => Some(convert_request_body(body)),
-        ReferenceOr::Reference { .. } => None, // TODO: Resolve refs
-    });
+    // Convert request body (including referenced ones)
+    let request_body = match &op.request_body {
+        Some(ReferenceOr::Item(body)) => Some(convert_request_body(body)),
+        Some(ReferenceOr::Reference { reference }) => {
+            let resolved = resolver.resolve_request_body(reference)?;
+            Some(convert_request_body(resolved))
+        }
+        None => None,
+    };
 
     // Convert responses
     let mut responses = HashMap::new();
@@ -1135,5 +1224,186 @@ components:
         // Check OAuth2
         let oauth2 = contract.security_schemes.get("oauth2").unwrap();
         assert!(matches!(oauth2.scheme_type, SecuritySchemeType::OAuth2));
+    }
+
+    #[test]
+    fn test_parameter_reference_resolution() {
+        let yaml = r##"
+openapi: "3.1.0"
+info:
+  title: Test API
+  version: "1.0.0"
+paths:
+  /users/{userId}:
+    parameters:
+      - $ref: "#/components/parameters/UserIdParam"
+    get:
+      operationId: getUser
+      responses:
+        "200":
+          description: Success
+components:
+  parameters:
+    UserIdParam:
+      name: userId
+      in: path
+      required: true
+      description: User identifier
+      schema:
+        type: string
+        format: uuid
+"##;
+        let contract = parse_openapi(yaml).unwrap();
+
+        let get_user = contract.operations.get("getUser").unwrap();
+        assert_eq!(get_user.parameters.len(), 1);
+
+        let param = &get_user.parameters[0];
+        assert_eq!(param.name, "userId");
+        assert!(param.required);
+        assert_eq!(param.description, Some("User identifier".to_string()));
+    }
+
+    #[test]
+    fn test_request_body_reference_resolution() {
+        let yaml = r##"
+openapi: "3.1.0"
+info:
+  title: Test API
+  version: "1.0.0"
+paths:
+  /users:
+    post:
+      operationId: createUser
+      requestBody:
+        $ref: "#/components/requestBodies/CreateUserBody"
+      responses:
+        "201":
+          description: Created
+components:
+  requestBodies:
+    CreateUserBody:
+      required: true
+      description: User creation payload
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+"##;
+        let contract = parse_openapi(yaml).unwrap();
+
+        let create_user = contract.operations.get("createUser").unwrap();
+        let request_body = create_user.request_body.as_ref().unwrap();
+
+        assert!(request_body.required);
+        assert_eq!(
+            request_body.description,
+            Some("User creation payload".to_string())
+        );
+        assert!(request_body.content.contains_key("application/json"));
+    }
+
+    #[test]
+    fn test_unresolved_parameter_reference_error() {
+        let yaml = r##"
+openapi: "3.1.0"
+info:
+  title: Test API
+  version: "1.0.0"
+paths:
+  /users/{userId}:
+    get:
+      operationId: getUser
+      parameters:
+        - $ref: "#/components/parameters/NonExistentParam"
+      responses:
+        "200":
+          description: Success
+"##;
+        let result = parse_openapi(yaml);
+        assert!(result.is_err());
+
+        let err = result.unwrap_err();
+        assert!(
+            err.to_string().contains("Unresolved parameter reference"),
+            "Expected unresolved parameter error, got: {err}"
+        );
+    }
+
+    #[test]
+    fn test_unresolved_request_body_reference_error() {
+        let yaml = r##"
+openapi: "3.1.0"
+info:
+  title: Test API
+  version: "1.0.0"
+paths:
+  /users:
+    post:
+      operationId: createUser
+      requestBody:
+        $ref: "#/components/requestBodies/NonExistent"
+      responses:
+        "201":
+          description: Created
+"##;
+        let result = parse_openapi(yaml);
+        assert!(result.is_err());
+
+        let err = result.unwrap_err();
+        assert!(
+            err.to_string().contains("Unresolved request body reference"),
+            "Expected unresolved request body error, got: {err}"
+        );
+    }
+
+    #[test]
+    fn test_operation_parameter_reference_resolution() {
+        let yaml = r##"
+openapi: "3.1.0"
+info:
+  title: Test API
+  version: "1.0.0"
+paths:
+  /items:
+    get:
+      operationId: listItems
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: Success
+components:
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    LimitParam:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+"##;
+        let contract = parse_openapi(yaml).unwrap();
+
+        let list_items = contract.operations.get("listItems").unwrap();
+        assert_eq!(list_items.parameters.len(), 2);
+
+        let page_param = list_items.parameters.iter().find(|p| p.name == "page").unwrap();
+        assert!(!page_param.required);
+
+        let limit_param = list_items.parameters.iter().find(|p| p.name == "limit").unwrap();
+        assert!(!limit_param.required);
     }
 }

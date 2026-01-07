@@ -64,7 +64,8 @@ pub fn run_publish(args: &PublishArgs) -> Result<()> {
     }
 
     // Create client
-    let client = RegistryClient::new(config);
+    let client = RegistryClient::new(config)
+        .context("Failed to create registry client")?;
 
     // Run async publish
     let runtime = tokio::runtime::Runtime::new()?;
@@ -158,7 +159,8 @@ pub fn run_fetch(args: &FetchArgs) -> Result<()> {
     }
 
     // Create client
-    let client = RegistryClient::new(config);
+    let client = RegistryClient::new(config)
+        .context("Failed to create registry client")?;
 
     // Run async fetch
     let runtime = tokio::runtime::Runtime::new()?;
@@ -262,7 +264,8 @@ pub fn run_list_versions(args: &ListVersionsArgs) -> Result<()> {
     }
 
     // Create client
-    let client = RegistryClient::new(config);
+    let client = RegistryClient::new(config)
+        .context("Failed to create registry client")?;
 
     // Run async list
     let runtime = tokio::runtime::Runtime::new()?;

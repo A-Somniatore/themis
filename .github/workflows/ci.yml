@@ -129,16 +129,45 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install cargo-audit
-        run: cargo install cargo-audit
+        run: cargo install cargo-audit --locked
+
+      - name: Cache advisory database
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/advisory-db
+          key: ${{ runner.os }}-advisory-db
 
       - name: Run audit
-        run: cargo audit
-        continue-on-error: true  # Don't fail CI on advisories until we have deps
+        run: cargo audit --deny warnings
+
+  # MSRV check (Minimum Supported Rust Version)
+  msrv:
+    name: MSRV (1.75)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust 1.75
+        uses: dtolnay/rust-action@1.75
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-msrv-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-msrv-
+
+      - name: Check MSRV
+        run: cargo check --workspace
 
   # Ensure all jobs pass
   ci-success:
     name: CI Success
-    needs: [check, test, fmt, clippy, docs]
+    needs: [check, test, fmt, clippy, docs, audit, msrv]
     runs-on: ubuntu-latest
     steps:
       - name: All checks passed
