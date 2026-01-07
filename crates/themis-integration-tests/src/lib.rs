@@ -34,6 +34,7 @@ pub mod archimedes_mocks;
 pub mod artifact_tests;
 pub mod codegen_tests;
 pub mod e2e_tests;
+pub mod performance_tests;
 pub mod schema_validation_tests;
 pub mod validation_tests;
 pub mod workflow_tests;
