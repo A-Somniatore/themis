@@ -1,10 +1,10 @@
 # Themis – Development Roadmap
 
-> **Version**: 1.14.0  
+> **Version**: 1.15.0  
 > **Created**: 2026-01-04  
 > **Last Updated**: 2026-01-07  
 > **Target Completion**: Week 15 (MVP + Hardening)
-> **Current Progress**: Phase T5.5 IN PROGRESS ⭐ - Tech Debt & Hardening (407 tests)
+> **Current Progress**: Phase T5.5 P0 COMPLETE ✅ - Now addressing P1 items (407 tests)
 
 ---
 
@@ -509,17 +509,18 @@ themis-platform/
 > **Purpose**: Address technical debt identified in architecture review before proceeding to post-MVP features.
 > **Source**: Senior architect code review (2026-01-07)
 
-### Critical (P0) - Must Fix Before Production
+### Critical (P0) - Must Fix Before Production ✅ COMPLETE
 
 - [x] Remove `.expect()` calls from production code
   - [x] Fix `themis-registry/src/client.rs:34` - HTTP client creation
     > ✅ **Fixed 2026-01-07**: `RegistryClient::new()` now returns `Result<Self, RegistryError>`
   - [x] ~~Fix `themis-registry/src/config.rs:306-307`~~ - Was in test code, not production
     > ✅ **Verified 2026-01-07**: These `.expect()` calls are in `#[test]` functions only
-- [ ] Add `cargo audit` to CI pipeline
-  - [ ] Install cargo-audit in GitHub Actions
-  - [ ] Add security vulnerability check step
-  > **Impact**: No automated security vulnerability detection
+- [x] Add `cargo audit` to CI pipeline
+  - [x] Install cargo-audit in GitHub Actions
+  - [x] Add security vulnerability check step
+  - [x] Add MSRV (1.75) check
+  > ✅ **Added 2026-01-07**: CI workflow includes `audit` and `msrv` jobs
 - [x] Implement `$ref` resolution in OpenAPI parser
   - [x] Parameter references (`#/components/parameters/*`)
     > ✅ **Fixed 2026-01-07**: `ReferenceResolver::resolve_parameter()`
@@ -557,7 +558,8 @@ themis-platform/
 |------|----------|----------|--------|
 | `.expect()` in HTTP client | `client.rs:34` | P0 | ✅ Fixed |
 | `.expect()` in config | `config.rs:306-307` | P0 | ✅ Test code only |
-| No cargo audit | CI | P0 | ❌ |
+| `cargo audit` in CI | `.github/workflows/ci.yml` | P0 | ✅ Added |
+| MSRV (1.75) in CI | `.github/workflows/ci.yml` | P0 | ✅ Added |
 | `$ref` param resolution | `parser.rs` | P0 | ✅ Fixed |
 | `$ref` requestBody resolution | `parser.rs` | P0 | ✅ Fixed |
 | `$ref` response resolution | `parser.rs` | P1 | ❌ |

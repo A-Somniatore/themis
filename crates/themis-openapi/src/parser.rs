@@ -35,19 +35,19 @@ struct ReferenceResolver<'a> {
 }
 
 impl<'a> ReferenceResolver<'a> {
-    fn new(openapi: &'a OpenAPI) -> Self {
+    const fn new(openapi: &'a OpenAPI) -> Self {
         Self { openapi }
     }
 
     /// Resolves a parameter reference (e.g., "#/components/parameters/UserIdParam").
-    fn resolve_parameter(&self, reference: &str) -> ThemisResult<&'a OpenApiParameter> {
+    fn resolve_parameter(&self, ref_path: &str) -> ThemisResult<&'a OpenApiParameter> {
         // Parse the reference path
-        let name = self.extract_component_name(reference, "parameters")?;
+        let param_name = Self::extract_component_name(ref_path, "parameters")?;
 
         self.openapi
             .components
             .as_ref()
-            .and_then(|c| c.parameters.get(name))
+            .and_then(|c| c.parameters.get(param_name))
             .and_then(|p| match p {
                 ReferenceOr::Item(param) => Some(param),
                 ReferenceOr::Reference { .. } => {
@@ -56,18 +56,18 @@ impl<'a> ReferenceResolver<'a> {
                 }
             })
             .ok_or_else(|| ThemisError::SchemaValidation {
-                message: format!("Unresolved parameter reference: {reference}"),
+                message: format!("Unresolved parameter reference: {ref_path}"),
             })
     }
 
     /// Resolves a request body reference (e.g., "#/components/requestBodies/CreateUser").
-    fn resolve_request_body(&self, reference: &str) -> ThemisResult<&'a openapiv3::RequestBody> {
-        let name = self.extract_component_name(reference, "requestBodies")?;
+    fn resolve_request_body(&self, ref_path: &str) -> ThemisResult<&'a openapiv3::RequestBody> {
+        let body_name = Self::extract_component_name(ref_path, "requestBodies")?;
 
         self.openapi
             .components
             .as_ref()
-            .and_then(|c| c.request_bodies.get(name))
+            .and_then(|c| c.request_bodies.get(body_name))
             .and_then(|rb| match rb {
                 ReferenceOr::Item(body) => Some(body),
                 ReferenceOr::Reference { .. } => {
@@ -76,7 +76,7 @@ impl<'a> ReferenceResolver<'a> {
                 }
             })
             .ok_or_else(|| ThemisError::SchemaValidation {
-                message: format!("Unresolved request body reference: {reference}"),
+                message: format!("Unresolved request body reference: {ref_path}"),
             })
     }
 
@@ -84,16 +84,15 @@ impl<'a> ReferenceResolver<'a> {
     ///
     /// E.g., "#/components/parameters/UserIdParam" -> "UserIdParam"
     fn extract_component_name<'b>(
-        &self,
-        reference: &'b str,
+        ref_path: &'b str,
         expected_type: &str,
     ) -> ThemisResult<&'b str> {
         let prefix = format!("#/components/{expected_type}/");
-        reference
+        ref_path
             .strip_prefix(&prefix)
             .ok_or_else(|| ThemisError::SchemaValidation {
                 message: format!(
-                    "Invalid {expected_type} reference format: {reference}. Expected format: {prefix}<name>"
+                    "Invalid {expected_type} reference format: {ref_path}. Expected format: {prefix}<name>"
                 ),
             })
     }
