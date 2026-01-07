@@ -527,9 +527,11 @@ themis-platform/
     > ✅ **Fixed 2026-01-07**: `ReferenceResolver::resolve_parameter()`
   - [x] Request body references (`#/components/requestBodies/*`)
     > ✅ **Fixed 2026-01-07**: `ReferenceResolver::resolve_request_body()`
-  - [ ] Schema references (`#/components/schemas/*`) - existing via openapiv3 crate
-  - [ ] Response references (`#/components/responses/*`)
-  - [ ] Header references (`#/components/headers/*`)
+  - [x] Schema references (`#/components/schemas/*`) - handled via openapiv3 crate
+  - [x] Response references (`#/components/responses/*`)
+    > ✅ **Fixed 2026-01-07**: `ReferenceResolver::resolve_response()`
+  - [x] Header references (`#/components/headers/*`)
+    > ✅ **Fixed 2026-01-07**: `ReferenceResolver::resolve_header()`
 
 ### High Priority (P1) - Before V1 Release ✅ COMPLETE
 
@@ -538,13 +540,13 @@ themis-platform/
   - [x] `security/require-auth-for-mutations` (THEMIS011) - POST/PUT/PATCH/DELETE need security
   - [x] `security/no-sensitive-params-in-query` (THEMIS012) - password/token/secret not in query
   - [x] `security/no-internal-error-exposure` (THEMIS013) - No stack_trace/debug in error responses
-  > ✅ **Implemented 2026-01-08**: 4 security rules with 11 tests
+  > ✅ **Implemented**: 4 security rules with 10 tests
 - [x] Implement versioning lint rules (THEMIS014-017)
   - [x] `versioning/require-semantic-version` (THEMIS014) - Version 0.0.0 is invalid
   - [x] `versioning/no-pre-release-in-production` (THEMIS015) - No alpha/beta in production
   - [x] `versioning/version-in-info` (THEMIS016) - Meaningful version required
   - [x] `versioning/no-zero-major-version` (THEMIS017) - Major 0 indicates unstable (disabled by default)
-  > ✅ **Implemented 2026-01-08**: 4 versioning rules with 13 tests
+  > ✅ **Implemented**: 4 versioning rules with 12 tests
 
 ### Moderate Priority (P2) - Code Quality
 
@@ -566,7 +568,8 @@ themis-platform/
 | MSRV (1.75) in CI | `.github/workflows/ci.yml` | P0 | ✅ Added |
 | `$ref` param resolution | `parser.rs` | P0 | ✅ Fixed |
 | `$ref` requestBody resolution | `parser.rs` | P0 | ✅ Fixed |
-| `$ref` response resolution | `parser.rs` | P1 | ⏳ Backlog |
+| `$ref` response resolution | `parser.rs` | P1 | ✅ Fixed |
+| `$ref` header resolution | `parser.rs` | P1 | ✅ Fixed |
 | Security lint rules | `security.rs` | P1 | ✅ Implemented |
 | Versioning lint rules | `versioning.rs` | P1 | ✅ Implemented |
 | Empty normalizer | `normalizer.rs` | P2 | ⏳ Backlog |

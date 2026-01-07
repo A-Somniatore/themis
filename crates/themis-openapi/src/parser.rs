@@ -1464,4 +1464,186 @@ components:
         let limit_param = list_items.parameters.iter().find(|p| p.name == "limit").unwrap();
         assert!(!limit_param.required);
     }
+
+    #[test]
+    fn test_response_reference_resolution() {
+        let yaml = r##"
+openapi: "3.1.0"
+info:
+  title: Test API
+  version: "1.0.0"
+paths:
+  /users/{id}:
+    get:
+      operationId: getUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+components:
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+"##;
+        let contract = parse_openapi(yaml).unwrap();
+
+        let get_user = contract.operations.get("getUser").unwrap();
+        assert_eq!(get_user.responses.len(), 3);
+
+        // Check 404 response was resolved
+        let not_found = get_user.responses.get("404").unwrap();
+        assert_eq!(not_found.description, "Resource not found");
+        assert!(not_found.content.contains_key("application/json"));
+
+        // Check 500 response was resolved
+        let internal_error = get_user.responses.get("500").unwrap();
+        assert_eq!(internal_error.description, "Internal server error");
+    }
+
+    #[test]
+    fn test_header_reference_resolution() {
+        let yaml = r##"
+openapi: "3.1.0"
+info:
+  title: Test API
+  version: "1.0.0"
+paths:
+  /items:
+    get:
+      operationId: listItems
+      responses:
+        "200":
+          description: Success
+          headers:
+            X-Total-Count:
+              $ref: "#/components/headers/TotalCount"
+            X-Rate-Limit:
+              $ref: "#/components/headers/RateLimit"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+components:
+  headers:
+    TotalCount:
+      description: Total number of items
+      schema:
+        type: integer
+    RateLimit:
+      description: Rate limit remaining
+      required: true
+      schema:
+        type: integer
+"##;
+        let contract = parse_openapi(yaml).unwrap();
+
+        let list_items = contract.operations.get("listItems").unwrap();
+        let response = list_items.responses.get("200").unwrap();
+
+        assert_eq!(response.headers.len(), 2);
+
+        // Check headers were resolved
+        let total_count = response.headers.get("X-Total-Count").unwrap();
+        assert_eq!(total_count.description, Some("Total number of items".to_string()));
+
+        let rate_limit = response.headers.get("X-Rate-Limit").unwrap();
+        assert_eq!(rate_limit.description, Some("Rate limit remaining".to_string()));
+        assert!(rate_limit.required);
+    }
+
+    #[test]
+    fn test_default_response_reference_resolution() {
+        let yaml = r##"
+openapi: "3.1.0"
+info:
+  title: Test API
+  version: "1.0.0"
+paths:
+  /test:
+    get:
+      operationId: testOp
+      responses:
+        "200":
+          description: Success
+        default:
+          $ref: "#/components/responses/DefaultError"
+components:
+  responses:
+    DefaultError:
+      description: Unexpected error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+              message:
+                type: string
+"##;
+        let contract = parse_openapi(yaml).unwrap();
+
+        let test_op = contract.operations.get("testOp").unwrap();
+
+        // Check default response was resolved
+        let default_resp = test_op.responses.get("default").unwrap();
+        assert_eq!(default_resp.description, "Unexpected error");
+        assert!(default_resp.content.contains_key("application/json"));
+    }
+
+    #[test]
+    fn test_unresolved_response_reference() {
+        let yaml = r##"
+openapi: "3.1.0"
+info:
+  title: Test API
+  version: "1.0.0"
+paths:
+  /test:
+    get:
+      operationId: testOp
+      responses:
+        "404":
+          $ref: "#/components/responses/NonExistent"
+"##;
+        let result = parse_openapi(yaml);
+        assert!(result.is_err());
+
+        let err = result.unwrap_err();
+        assert!(
+            err.to_string().contains("Unresolved response reference"),
+            "Expected unresolved response error, got: {err}"
+        );
+    }
 }
