@@ -1,10 +1,10 @@
 # Themis – Development Roadmap
 
-> **Version**: 1.16.0  
+> **Version**: 2.0.0  
 > **Created**: 2026-01-04  
 > **Last Updated**: 2026-01-08  
-> **Target Completion**: Week 15 (MVP + Hardening)
-> **Current Progress**: Phase T5.5 COMPLETE ✅ - All P0/P1 tech debt resolved (424 tests)
+> **Target Completion**: Week 24 (Full V1 with all contract formats)
+> **Current Progress**: Phase T6 IN PROGRESS 🔄 - Implementing Protobuf support (424 tests, MVP complete)
 
 ---
 
@@ -552,11 +552,15 @@ themis-platform/
 
 - [x] Add MSRV (1.75) testing to CI
   > ✅ **Added 2026-01-07**: `msrv` job in CI workflow
-- [ ] Update outdated dependencies (indexmap, serde_json minor versions)
-- [ ] Consider refactoring large generator files (>1000 lines each):
-  - `python/generator.rs` - 1,070 lines
-  - `typescript/generator.rs` - 1,034 lines
-  - `rust/generator.rs` - 944 lines
+- [x] Update outdated dependencies (indexmap, serde_json minor versions)
+  > ✅ **Updated 2026-01-07**: indexmap 2.12.1→2.13.0, serde_json 1.0.148→1.0.149
+- [x] Review large generator files (>1000 lines each):
+  > ✅ **Reviewed 2026-01-07**: Decided NOT to refactor. Rationale:
+  > - Files are well-structured with clear helper functions
+  > - Type generation already separated to `types.rs` modules
+  > - Code generation is inherently verbose (string building)
+  > - No code duplication issues found
+  > - Refactoring would just move code without benefit
 
 ### Tech Debt Summary (from code review)
 
@@ -572,27 +576,14 @@ themis-platform/
 | `$ref` header resolution | `parser.rs` | P1 | ✅ Fixed |
 | Security lint rules | `security.rs` | P1 | ✅ Implemented |
 | Versioning lint rules | `versioning.rs` | P1 | ✅ Implemented |
+| Outdated dependencies | Cargo.lock | P2 | ✅ Updated |
+| Large generator files | codegen crate | P2 | ✅ Reviewed (no action needed) |
 | Empty normalizer | `normalizer.rs` | P2 | ⏳ Backlog |
-| Large generator files | codegen crate | P2 | ⏳ Backlog |
 
 ### Phase T5.5 Milestone ✅ ACHIEVED
 
 **Criteria**: All P0 issues resolved, P1 issues addressed, code passes `cargo audit`
 **Result**: 424 tests passing, 14 lint rules (3 naming + 3 docs + 4 security + 4 versioning)
-
----
-
-## Milestones Summary
-
-| Milestone          | Target   | Criteria                                |
-| ------------------ | -------- | --------------------------------------- |
-| T0: Shared Types   | Week 1   | Platform types crate published          |
-| T1: Parsing        | Week 4   | OpenAPI specs parsed correctly          |
-| T2: Compatibility  | Week 6   | Breaking changes detected               |
-| T3: Code Gen       | Week 10  | Rust, TypeScript, Python code generated |
-| T4: Publishing     | Week 12  | Artifacts published to registry         |
-| T5: Integration    | Week 14  | End-to-end testing with Archimedes      |
-| T5.5: Hardening    | Week 15  | Tech debt resolved, cargo audit passes  |
 
 ---
 
@@ -647,31 +638,193 @@ Themis MUST produce artifacts that:
 
 ---
 
-## Future Work (Post-MVP)
+## Post-MVP Development (Weeks 16+) ⭐ IN PROGRESS
 
-### Protobuf Support (T5)
+> **Purpose**: Extend Themis to support all V1 contract formats and additional language targets.
+> **Status**: Active development starting 2026-01-08
 
-- [ ] Protobuf v3 parser
-- [ ] gRPC service extraction
-- [ ] Protobuf-specific linting
-- [ ] Rust tonic code generation
+---
 
-### GraphQL Support (T6)
+## Phase T6: Protobuf/gRPC Support (Weeks 16-17)
 
-- [ ] GraphQL SDL parser
-- [ ] Schema validation
-- [ ] Resolver code generation
+> **Purpose**: Add Protobuf v3 parsing and gRPC service extraction for microservice contracts.
 
-### AsyncAPI Support (T7)
+### Week 16: Protobuf Parser
 
-- [ ] AsyncAPI 3.0 parser
-- [ ] Channel/topic validation
-- [ ] Event handler code generation
+- [ ] Create `themis-protobuf` crate
+- [ ] Implement Protobuf v3 parser using `prost-types`
+- [ ] Extract service definitions (rpc methods)
+- [ ] Extract message types as schemas
+- [ ] Handle `import` statements
+- [ ] Parse Themis extensions (`themis.service`, `themis.field`, `themis.error`)
+- [ ] Normalize to `Contract` model
+- [ ] Add unit tests (target: 20+ tests)
 
-### Additional Languages (T8)
+### Week 17: Protobuf Linting & Codegen
 
-- [ ] C++ code generation
-- [ ] Go code generation
+- [ ] Implement Protobuf-specific lint rules:
+  - [ ] `proto/package-name`: Package should follow naming convention
+  - [ ] `proto/service-name`: Service names should be PascalCase
+  - [ ] `proto/field-naming`: Fields should be snake_case
+- [ ] Generate Rust tonic client/server stubs
+- [ ] Add `themis validate --format protobuf` support
+- [ ] Add `themis codegen --format protobuf` support
+- [ ] Integration tests with sample proto files
+
+### Phase T6 Milestone
+
+**Criteria**: Protobuf contracts can be parsed, validated, and used for code generation
+
+---
+
+## Phase T7: GraphQL Support (Weeks 18-19)
+
+> **Purpose**: Add GraphQL SDL parsing for GraphQL API governance.
+
+### Week 18: GraphQL Parser
+
+- [ ] Create `themis-graphql` crate
+- [ ] Implement GraphQL SDL parser using `graphql-parser`
+- [ ] Extract Query/Mutation/Subscription operations
+- [ ] Parse `@operation` directive for Themis metadata
+- [ ] Parse `@themis` schema directive for service info
+- [ ] Extract input/output types as schemas
+- [ ] Handle custom scalars (DateTime, Email, etc.)
+- [ ] Normalize to `Contract` model
+- [ ] Add unit tests (target: 25+ tests)
+
+### Week 19: GraphQL Linting & Codegen
+
+- [ ] Implement GraphQL-specific lint rules:
+  - [ ] `graphql/operation-directive`: All queries/mutations need @operation
+  - [ ] `graphql/input-naming`: Input types should end with "Input"
+  - [ ] `graphql/payload-naming`: Mutation payloads should end with "Payload"
+  - [ ] `graphql/relay-connection`: Connections should follow Relay spec
+- [ ] Generate async-graphql resolvers (Rust)
+- [ ] Generate TypeScript resolvers
+- [ ] Add `themis validate --format graphql` support
+- [ ] Add `themis codegen --format graphql` support
+- [ ] Integration tests with sample GraphQL schemas
+
+### Phase T7 Milestone
+
+**Criteria**: GraphQL schemas can be parsed, validated, and used for resolver generation
+
+---
+
+## Phase T8: AsyncAPI Support (Weeks 20-21)
+
+> **Purpose**: Add AsyncAPI 3.0 parsing for event-driven architecture contracts.
+
+### Week 20: AsyncAPI Parser
+
+- [ ] Create `themis-asyncapi` crate
+- [ ] Implement AsyncAPI 3.0 parser
+- [ ] Extract channels and operations (publish/subscribe)
+- [ ] Parse message schemas
+- [ ] Extract server bindings (Kafka, AMQP, etc.)
+- [ ] Handle `$ref` resolution for messages
+- [ ] Normalize to `Contract` model (operations as events)
+- [ ] Add unit tests (target: 20+ tests)
+
+### Week 21: AsyncAPI Linting & Codegen
+
+- [ ] Implement AsyncAPI-specific lint rules:
+  - [ ] `async/channel-naming`: Channels should follow naming convention
+  - [ ] `async/message-schema`: All messages must have schemas
+  - [ ] `async/operation-id`: Operations need unique IDs
+- [ ] Generate Rust event producer/consumer traits
+- [ ] Generate TypeScript event handlers
+- [ ] Generate Python event handlers
+- [ ] Add `themis validate --format asyncapi` support
+- [ ] Add `themis codegen --format asyncapi` support
+- [ ] Integration tests with sample AsyncAPI specs
+
+### Phase T8 Milestone
+
+**Criteria**: AsyncAPI contracts can be parsed, validated, and used for event handler generation
+
+---
+
+## Phase T9: Additional Language Targets (Weeks 22-24)
+
+> **Purpose**: Extend code generation to C++ and Go for polyglot microservice environments.
+
+### Week 22: C++ Code Generation
+
+- [ ] Create `themis-codegen/src/cpp/` module
+- [ ] Generate C++ structs from schemas
+- [ ] Add nlohmann/json serialization
+- [ ] Generate libcurl/cpr HTTP client
+- [ ] Generate header-only interfaces for handlers
+- [ ] Handle optional fields (std::optional)
+- [ ] Add unit tests (target: 15+ tests)
+
+### Week 23: Go Code Generation
+
+- [ ] Create `themis-codegen/src/go/` module
+- [ ] Generate Go structs from schemas
+- [ ] Add JSON tags for serialization
+- [ ] Generate net/http client
+- [ ] Generate net/http handler interfaces
+- [ ] Handle nullable fields (pointers)
+- [ ] Add unit tests (target: 15+ tests)
+
+### Week 24: Multi-Language Integration
+
+- [ ] Add `themis codegen --language cpp` support
+- [ ] Add `themis codegen --language go` support
+- [ ] Update CLI help and documentation
+- [ ] Integration tests across all languages
+- [ ] Performance benchmarks for large contracts
+
+### Phase T9 Milestone
+
+**Criteria**: C++ and Go code can be generated from all supported contract formats
+
+---
+
+## Remaining Backlog (P2)
+
+> Items deferred from earlier phases, to be addressed as time permits.
+
+| Item | Location | Priority | Status |
+|------|----------|----------|--------|
+| Update outdated deps | `Cargo.toml` | P2 | ⏳ Backlog |
+| Empty normalizer impl | `normalizer.rs` | P2 | ⏳ Backlog |
+| npm package output | TypeScript codegen | P2 | ⏳ Backlog |
+| PyPI package output | Python codegen | P2 | ⏳ Backlog |
+| External `$ref` resolution | OpenAPI parser | P2 | ⏳ Backlog |
+
+---
+
+## Pending External Items
+
+> Items blocked on external teams or dependencies.
+
+| Item | Blocker | Status |
+|------|---------|--------|
+| `themis-platform-types` v0.2.1 publish | crates.io account setup | ⏳ Pending |
+| Control plane crate skeleton | Eunomia team (Week 13) | ⏳ Pending |
+| Archimedes SDK integration | Archimedes A5 milestone | ⏳ Pending |
+
+---
+
+## Updated Milestones Summary
+
+| Milestone          | Target   | Criteria                                | Status |
+| ------------------ | -------- | --------------------------------------- | ------ |
+| T0: Shared Types   | Week 1   | Platform types crate published          | ✅ |
+| T1: Parsing        | Week 4   | OpenAPI specs parsed correctly          | ✅ |
+| T2: Compatibility  | Week 6   | Breaking changes detected               | ✅ |
+| T3: Code Gen       | Week 10  | Rust, TypeScript, Python code generated | ✅ |
+| T4: Publishing     | Week 12  | Artifacts published to registry         | ✅ |
+| T5: Integration    | Week 14  | End-to-end testing with Archimedes      | ✅ |
+| T5.5: Hardening    | Week 15  | Tech debt resolved, cargo audit passes  | ✅ |
+| T6: Protobuf       | Week 17  | Protobuf/gRPC contracts supported       | 🔄 |
+| T7: GraphQL        | Week 19  | GraphQL SDL contracts supported         | ⏳ |
+| T8: AsyncAPI       | Week 21  | Event-driven contracts supported        | ⏳ |
+| T9: Languages      | Week 24  | C++ and Go code generation              | ⏳ |
 
 ---
 
