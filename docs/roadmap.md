@@ -511,18 +511,23 @@ themis-platform/
 
 ### Critical (P0) - Must Fix Before Production
 
-- [ ] Remove `.expect()` calls from production code
-  - [ ] Fix `themis-registry/src/client.rs:34` - HTTP client creation
-  - [ ] Fix `themis-registry/src/config.rs:306-307` - Base64/UTF8 decoding
-  > **Impact**: These will panic in production on error conditions
+- [x] Remove `.expect()` calls from production code
+  - [x] Fix `themis-registry/src/client.rs:34` - HTTP client creation
+    > ✅ **Fixed 2026-01-07**: `RegistryClient::new()` now returns `Result<Self, RegistryError>`
+  - [x] ~~Fix `themis-registry/src/config.rs:306-307`~~ - Was in test code, not production
+    > ✅ **Verified 2026-01-07**: These `.expect()` calls are in `#[test]` functions only
 - [ ] Add `cargo audit` to CI pipeline
   - [ ] Install cargo-audit in GitHub Actions
   - [ ] Add security vulnerability check step
   > **Impact**: No automated security vulnerability detection
-- [ ] Implement or explicitly fail `$ref` resolution in OpenAPI parser
-  - [ ] `themis-openapi/src/parser.rs:203` - TODO for ref resolution
-  - [ ] `themis-openapi/src/parser.rs:279` - TODO for ref resolution
-  > **Impact**: Complex OpenAPI specs with references may not parse correctly
+- [x] Implement `$ref` resolution in OpenAPI parser
+  - [x] Parameter references (`#/components/parameters/*`)
+    > ✅ **Fixed 2026-01-07**: `ReferenceResolver::resolve_parameter()`
+  - [x] Request body references (`#/components/requestBodies/*`)
+    > ✅ **Fixed 2026-01-07**: `ReferenceResolver::resolve_request_body()`
+  - [ ] Schema references (`#/components/schemas/*`) - existing via openapiv3 crate
+  - [ ] Response references (`#/components/responses/*`)
+  - [ ] Header references (`#/components/headers/*`)
 
 ### High Priority (P1) - Before V1 Release
 
@@ -550,10 +555,12 @@ themis-platform/
 
 | Item | Location | Severity | Status |
 |------|----------|----------|--------|
-| `.expect()` in HTTP client | `client.rs:34` | P0 | ❌ |
-| `.expect()` in config | `config.rs:306-307` | P0 | ❌ |
+| `.expect()` in HTTP client | `client.rs:34` | P0 | ✅ Fixed |
+| `.expect()` in config | `config.rs:306-307` | P0 | ✅ Test code only |
 | No cargo audit | CI | P0 | ❌ |
-| Missing $ref resolution | `parser.rs:203,279` | P0 | ❌ |
+| `$ref` param resolution | `parser.rs` | P0 | ✅ Fixed |
+| `$ref` requestBody resolution | `parser.rs` | P0 | ✅ Fixed |
+| `$ref` response resolution | `parser.rs` | P1 | ❌ |
 | Empty security rules | `security.rs` | P1 | ❌ |
 | Empty versioning rules | `versioning.rs` | P1 | ❌ |
 | Empty normalizer | `normalizer.rs` | P2 | ❌ |
