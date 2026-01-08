@@ -128,12 +128,48 @@ themis codegen ./api/openapi.yaml --dry-run
 - **TypeScript**: Interfaces, fetch client, Express handlers
 - **Python**: Dataclasses, httpx client, FastAPI handlers
 - **C++**: Structs, cpr/libcurl client
+- **Go**: Structs, interfaces
+- **JSON Schema**: Draft-07 schema output
+
+## GitHub Action
+
+Use Themis in your CI/CD pipeline with the official GitHub Action:
+
+```yaml
+# .github/workflows/contract-validation.yml
+name: Contract Validation
+
+on: [push, pull_request]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Validate OpenAPI Contract
+        uses: A-Somniatore/themis/.github/actions/themis-action@main
+        with:
+          command: validate
+          contract: './api/openapi.yaml'
+      
+      - name: Check for Breaking Changes
+        uses: A-Somniatore/themis/.github/actions/themis-action@main
+        with:
+          command: compat
+          old-contract: './api/v1/openapi.yaml'
+          new-contract: './api/v2/openapi.yaml'
+```
+
+See [.github/actions/themis-action/README.md](.github/actions/themis-action/README.md) for full documentation.
 
 ## Project Structure
 
 ```
 themis/
 ├── .github/
+│   ├── actions/
+│   │   └── themis-action/        # GitHub Action for CI/CD
 │   ├── workflows/
 │   │   ├── ci.yml                # CI pipeline
 │   │   └── release.yml           # Release automation
@@ -146,11 +182,20 @@ themis/
 ├── crates/
 │   ├── themis-core/              # Core types and traits
 │   ├── themis-openapi/           # OpenAPI 3.1 parser
-│   ├── themis-lint/              # Linting rules
+│   ├── themis-protobuf/          # Protobuf parser
+│   ├── themis-graphql/           # GraphQL parser
+│   ├── themis-asyncapi/          # AsyncAPI parser
+│   ├── themis-lint/              # Linting rules (18 rules)
+│   ├── themis-codegen/           # Code generation (6 languages)
+│   ├── themis-compat/            # Breaking change detection
+│   ├── themis-artifact/          # Artifact management
+│   ├── themis-registry/          # Contract registry
 │   └── themis-cli/               # CLI application
 ├── examples/                     # Example contracts
 │   └── users-service/
-│       └── v1/
+│       ├── v1/
+│       │   └── openapi.yaml
+│       └── v2/
 │           └── openapi.yaml
 ├── Cargo.toml                    # Workspace configuration
 ├── README.md

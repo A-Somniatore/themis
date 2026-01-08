@@ -1,0 +1,128 @@
+# Example: Contract Governance Workflow
+# This workflow demonstrates using the Themis action for contract governance
+
+name: Contract Governance
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'api/**'
+      - 'contracts/**'
+  pull_request:
+    paths:
+      - 'api/**'
+      - 'contracts/**'
+
+jobs:
+  # Job 1: Validate contract syntax and schema
+  validate:
+    name: Validate Contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Validate OpenAPI Contract
+        uses: A-Somniatore/themis/.github/actions/themis-action@main
+        with:
+          command: validate
+          contract: './examples/users-service/v2/openapi.yaml'
+          format: openapi
+
+  # Job 2: Lint contracts for best practices
+  lint:
+    name: Lint Contracts
+    runs-on: ubuntu-latest
+    needs: validate
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Lint OpenAPI Contract
+        id: lint
+        uses: A-Somniatore/themis/.github/actions/themis-action@main
+        with:
+          command: lint
+          contract: './examples/users-service/v2/openapi.yaml'
+          fail-on-warnings: 'false'
+      
+      - name: Report Lint Results
+        run: |
+          echo "Lint completed with ${{ steps.lint.outputs.issues-count }} issues"
+
+  # Job 3: Check for breaking changes on PRs
+  breaking-changes:
+    name: Breaking Change Detection
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check Compatibility
+        id: compat
+        uses: A-Somniatore/themis/.github/actions/themis-action@main
+        with:
+          command: compat
+          old-contract: './examples/users-service/v1/openapi.yaml'
+          new-contract: './examples/users-service/v2/openapi.yaml'
+          allow-breaking: 'false'
+      
+      - name: Comment on PR
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '⚠️ **Breaking Changes Detected**\n\nThis PR introduces breaking changes to the API contract. Please review the compatibility report above.'
+            })
+
+  # Job 4: Generate client code on main branch
+  generate-clients:
+    name: Generate Client SDKs
+    runs-on: ubuntu-latest
+    needs: [validate, lint]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    strategy:
+      matrix:
+        language: [typescript, python, rust]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Generate ${{ matrix.language }} Client
+        uses: A-Somniatore/themis/.github/actions/themis-action@main
+        with:
+          command: codegen
+          contract: './examples/users-service/v2/openapi.yaml'
+          language: ${{ matrix.language }}
+          output: './generated/${{ matrix.language }}'
+      
+      - name: Upload Generated Client
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.language }}-client
+          path: ./generated/${{ matrix.language }}
+          retention-days: 7
+
+  # Summary job
+  governance-complete:
+    name: Governance Complete
+    runs-on: ubuntu-latest
+    needs: [validate, lint, breaking-changes]
+    if: always()
+    steps:
+      - name: Check Results
+        run: |
+          if [ "${{ needs.validate.result }}" == "failure" ]; then
+            echo "❌ Contract validation failed"
+            exit 1
+          fi
+          if [ "${{ needs.lint.result }}" == "failure" ]; then
+            echo "❌ Contract linting failed"
+            exit 1
+          fi
+          if [ "${{ needs.breaking-changes.result }}" == "failure" ]; then
+            echo "⚠️ Breaking changes detected - review required"
+          fi
+          echo "✅ Contract governance checks completed"

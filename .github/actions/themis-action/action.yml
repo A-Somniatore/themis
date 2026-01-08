@@ -1,0 +1,104 @@
+name: 'Themis Contract Governance'
+description: 'Validate, lint, and check API contracts for compatibility using Themis'
+author: 'Themis Platform'
+
+branding:
+  icon: 'check-circle'
+  color: 'blue'
+
+inputs:
+  command:
+    description: 'The Themis command to run (validate, lint, compat, codegen)'
+    required: true
+    default: 'validate'
+  
+  contract:
+    description: 'Path to the contract file (OpenAPI, Protobuf, GraphQL, AsyncAPI)'
+    required: false
+    default: ''
+  
+  old-contract:
+    description: 'Path to the old/baseline contract (for compat command)'
+    required: false
+    default: ''
+  
+  new-contract:
+    description: 'Path to the new contract (for compat command)'
+    required: false
+    default: ''
+  
+  format:
+    description: 'Contract format (openapi, protobuf, graphql, asyncapi). Auto-detected if not specified.'
+    required: false
+    default: ''
+  
+  language:
+    description: 'Target language for code generation (rust, typescript, python, go, cpp, jsonschema)'
+    required: false
+    default: ''
+  
+  output:
+    description: 'Output directory for generated code'
+    required: false
+    default: './generated'
+  
+  config:
+    description: 'Path to Themis configuration file (themis.toml or themis.yaml)'
+    required: false
+    default: ''
+  
+  fail-on-warnings:
+    description: 'Treat warnings as errors and fail the action'
+    required: false
+    default: 'false'
+  
+  rules:
+    description: 'Comma-separated list of lint rules to enable (or "all" for all rules)'
+    required: false
+    default: 'all'
+  
+  allow-breaking:
+    description: 'Allow breaking changes in compatibility check (for compat command)'
+    required: false
+    default: 'false'
+  
+  working-directory:
+    description: 'Working directory for running Themis commands'
+    required: false
+    default: '.'
+  
+  version:
+    description: 'Themis CLI version to use (default: latest)'
+    required: false
+    default: 'latest'
+
+outputs:
+  result:
+    description: 'Result of the Themis command (success/failure)'
+  
+  issues-count:
+    description: 'Number of issues found (for lint command)'
+  
+  breaking-changes:
+    description: 'Number of breaking changes detected (for compat command)'
+  
+  generated-files:
+    description: 'List of generated files (for codegen command)'
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.command }}
+    - ${{ inputs.contract }}
+    - ${{ inputs.old-contract }}
+    - ${{ inputs.new-contract }}
+    - ${{ inputs.format }}
+    - ${{ inputs.language }}
+    - ${{ inputs.output }}
+    - ${{ inputs.config }}
+    - ${{ inputs.fail-on-warnings }}
+    - ${{ inputs.rules }}
+    - ${{ inputs.allow-breaking }}
+    - ${{ inputs.working-directory }}
+    - ${{ inputs.version }}
