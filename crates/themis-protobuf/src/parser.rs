@@ -2,13 +2,24 @@
 //!
 //! This module provides the core parsing logic for converting Protocol Buffer v3
 //! definitions into Themis [`Contract`] objects.
+//!
+//! ## Extension Support
+//!
+//! The parser extracts Themis-specific metadata from protobuf options:
+//!
+//! - `(themis.service)` on service definitions
+//! - `(themis.operation)` on RPC methods
+//! - `(themis.field)` on message fields
 
 use std::collections::HashMap;
 use std::path::Path;
 
 use indexmap::IndexMap;
 use themis_core::contract::{Contract, ContractFormat, ContractMetadata};
-use themis_core::operation::{HttpMethod, MediaType, Operation, RequestBody, Response};
+use themis_core::operation::{
+    HttpMethod, MediaType, Operation, RequestBody, Response, SecurityRequirement,
+    ThemisOperationMetadata,
+};
 use themis_core::schema::{
     ArraySchema, BooleanSchema, EnumSchema, EnumValue, IntegerSchema, NumberSchema, ObjectSchema,
     RefSchema, Schema, StringSchema,
@@ -87,11 +98,25 @@ impl ProtoParser {
             .and_then(|p| Self::parse_version_from_package(p))
             .unwrap_or_else(|| Version::new(1, 0, 0));
 
-        // Determine service name
-        let actual_service_name = parsed
+        // Extract themis.service options if available
+        let themis_service_opts = parsed
             .services
             .first()
-            .map_or_else(|| service_name.to_string(), |s| Self::to_kebab_case(&s.name));
+            .and_then(|s| s.themis_options.as_ref());
+
+        // Determine service name: themis.service.name > service name > fallback
+        let actual_service_name = themis_service_opts
+            .and_then(|opts| opts.name.clone())
+            .or_else(|| {
+                parsed
+                    .services
+                    .first()
+                    .map(|s| Self::to_kebab_case(&s.name))
+            })
+            .unwrap_or_else(|| service_name.to_string());
+
+        // Extract owner from themis.service options
+        let owner = themis_service_opts.and_then(|opts| opts.owner.clone());
 
         // Convert messages to schemas
         for message in &parsed.messages {
@@ -124,7 +149,7 @@ impl ProtoParser {
             metadata: ContractMetadata {
                 service_name: actual_service_name,
                 description: None,
-                owner: None,
+                owner,
                 repository: None,
                 documentation_url: None,
             },
@@ -179,7 +204,12 @@ impl ProtoParser {
 
     /// Converts a protobuf method to a Themis Operation.
     fn method_to_operation(method: &ProtoMethod, service_name: &str) -> Operation {
-        let operation_id = Self::to_camel_case(&method.name);
+        // Use operation_id from themis.operation option or generate from method name
+        let operation_id = method
+            .themis_options
+            .as_ref()
+            .and_then(|opts| opts.operation_id.clone())
+            .unwrap_or_else(|| Self::to_camel_case(&method.name));
 
         // Create request body content
         let mut request_content = HashMap::new();
@@ -219,6 +249,37 @@ impl ProtoParser {
             },
         );
 
+        // Build ThemisOperationMetadata if themis.operation options are present
+        let themis_metadata = method.themis_options.as_ref().and_then(|opts| {
+            if opts.rate_limit_tier.is_some()
+                || opts.timeout_tier.is_some()
+                || opts.idempotent.is_some()
+            {
+                Some(ThemisOperationMetadata {
+                    rate_limit_tier: opts.rate_limit_tier.clone(),
+                    timeout_tier: opts.timeout_tier.clone(),
+                    idempotent: opts.idempotent,
+                })
+            } else {
+                None
+            }
+        });
+
+        // Convert security schemes from themis.operation options
+        let security: Vec<SecurityRequirement> = method
+            .themis_options
+            .as_ref()
+            .map(|opts| {
+                opts.security
+                    .iter()
+                    .map(|s| SecurityRequirement {
+                        scheme: s.to_lowercase(),
+                        scopes: Vec::new(),
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+
         Operation {
             operation_id,
             summary: Some(format!("{service_name}.{}", method.name)),
@@ -228,10 +289,10 @@ impl ProtoParser {
             parameters: Vec::new(),
             request_body,
             responses,
-            security: Vec::new(),
+            security,
             deprecated: false,
             tags: vec![service_name.to_string()],
-            themis_metadata: None,
+            themis_metadata,
         }
     }
 
@@ -467,8 +528,17 @@ impl ParsedProto {
                 name: name.to_string(),
                 methods: Vec::new(),
                 comment: state.current_comment.take(),
+                themis_options: None,
             });
             state.in_service = true;
+            return true;
+        }
+
+        // Parse themis.service option
+        if state.in_service && trimmed.starts_with("option (themis.service)") {
+            if let Some(ref mut service) = state.current_service {
+                service.themis_options = Some(Self::parse_themis_service_option(trimmed));
+            }
             return true;
         }
 
@@ -478,6 +548,16 @@ impl ParsedProto {
                 parsed.services.push(service);
             }
             state.in_service = false;
+            return true;
+        }
+
+        // Parse themis.operation option for RPC
+        if state.in_service && trimmed.starts_with("option (themis.operation)") {
+            if let Some(ref mut service) = state.current_service {
+                if let Some(method) = service.methods.last_mut() {
+                    method.themis_options = Some(Self::parse_themis_operation_option(trimmed));
+                }
+            }
             return true;
         }
 
@@ -605,6 +685,7 @@ impl ParsedProto {
             input_type,
             output_type,
             comment,
+            themis_options: None,
         })
     }
 
@@ -681,6 +762,128 @@ impl ParsedProto {
 
         Some((name, number))
     }
+
+    /// Parses a `(themis.service)` option.
+    ///
+    /// Example:
+    /// ```protobuf
+    /// option (themis.service) = {
+    ///   name: "users-service"
+    ///   owner: "platform-team"
+    /// };
+    /// ```
+    fn parse_themis_service_option(line: &str) -> ThemisServiceOptions {
+        let mut options = ThemisServiceOptions::default();
+
+        // Extract content between { and }
+        if let Some(start) = line.find('{') {
+            let content = &line[start + 1..];
+            // Parse key-value pairs
+            options.name = Self::extract_proto_string_value(content, "name");
+            options.owner = Self::extract_proto_string_value(content, "owner");
+        }
+
+        options
+    }
+
+    /// Parses a `(themis.operation)` option.
+    ///
+    /// Example:
+    /// ```protobuf
+    /// option (themis.operation) = {
+    ///   operation_id: "getUser"
+    ///   rate_limit_tier: STANDARD
+    ///   timeout_tier: FAST
+    ///   idempotent: true
+    ///   security: [SPIFFE, BEARER]
+    /// };
+    /// ```
+    fn parse_themis_operation_option(line: &str) -> ThemisOperationOptions {
+        let mut options = ThemisOperationOptions::default();
+
+        // Extract content between { and }
+        if let Some(start) = line.find('{') {
+            let content = &line[start + 1..];
+            // Parse key-value pairs
+            options.operation_id = Self::extract_proto_string_value(content, "operation_id");
+            options.rate_limit_tier = Self::extract_proto_enum_value(content, "rate_limit_tier");
+            options.timeout_tier = Self::extract_proto_enum_value(content, "timeout_tier");
+            options.idempotent = Self::extract_proto_bool_value(content, "idempotent");
+            options.security = Self::extract_proto_list_value(content, "security");
+        }
+
+        options
+    }
+
+    /// Extracts a string value from proto option content.
+    fn extract_proto_string_value(content: &str, key: &str) -> Option<String> {
+        // Look for pattern: key: "value"
+        let pattern = format!("{key}:");
+        if let Some(start) = content.find(&pattern) {
+            let after_key = &content[start + pattern.len()..];
+            if let Some(quote_start) = after_key.find('"') {
+                let after_quote = &after_key[quote_start + 1..];
+                if let Some(quote_end) = after_quote.find('"') {
+                    return Some(after_quote[..quote_end].to_string());
+                }
+            }
+        }
+        None
+    }
+
+    /// Extracts an enum value from proto option content.
+    fn extract_proto_enum_value(content: &str, key: &str) -> Option<String> {
+        // Look for pattern: key: ENUM_VALUE
+        let pattern = format!("{key}:");
+        if let Some(start) = content.find(&pattern) {
+            let after_key = &content[start + pattern.len()..].trim_start();
+            // Read until whitespace, comma, or }
+            let end = after_key
+                .find(|c: char| c.is_whitespace() || c == ',' || c == '}')
+                .unwrap_or(after_key.len());
+            let value = after_key[..end].trim();
+            if !value.is_empty() {
+                return Some(value.to_string());
+            }
+        }
+        None
+    }
+
+    /// Extracts a boolean value from proto option content.
+    fn extract_proto_bool_value(content: &str, key: &str) -> Option<bool> {
+        // Look for pattern: key: true/false
+        let pattern = format!("{key}:");
+        if let Some(start) = content.find(&pattern) {
+            let after_key = &content[start + pattern.len()..].trim_start();
+            if after_key.starts_with("true") {
+                return Some(true);
+            } else if after_key.starts_with("false") {
+                return Some(false);
+            }
+        }
+        None
+    }
+
+    /// Extracts a list of enum values from proto option content.
+    fn extract_proto_list_value(content: &str, key: &str) -> Vec<String> {
+        // Look for pattern: key: [ENUM1, ENUM2]
+        let pattern = format!("{key}:");
+        if let Some(start) = content.find(&pattern) {
+            let after_key = &content[start + pattern.len()..];
+            if let Some(bracket_start) = after_key.find('[') {
+                let after_bracket = &after_key[bracket_start + 1..];
+                if let Some(bracket_end) = after_bracket.find(']') {
+                    let list_content = &after_bracket[..bracket_end];
+                    return list_content
+                        .split(',')
+                        .map(|s| s.trim().to_string())
+                        .filter(|s| !s.is_empty())
+                        .collect();
+                }
+            }
+        }
+        Vec::new()
+    }
 }
 
 /// Protobuf service definition.
@@ -690,6 +893,17 @@ struct ProtoService {
     methods: Vec<ProtoMethod>,
     #[allow(dead_code)]
     comment: Option<String>,
+    /// Themis service options extracted from `option (themis.service) = {...}`
+    themis_options: Option<ThemisServiceOptions>,
+}
+
+/// Themis service options from `(themis.service)`.
+#[derive(Debug, Clone, Default)]
+pub struct ThemisServiceOptions {
+    /// Service name from `name: "..."`
+    pub name: Option<String>,
+    /// Owner from `owner: "..."`
+    pub owner: Option<String>,
 }
 
 /// Protobuf RPC method.
@@ -699,6 +913,23 @@ struct ProtoMethod {
     input_type: String,
     output_type: String,
     comment: Option<String>,
+    /// Themis operation options extracted from `option (themis.operation) = {...}`
+    themis_options: Option<ThemisOperationOptions>,
+}
+
+/// Themis operation options from `(themis.operation)`.
+#[derive(Debug, Clone, Default)]
+pub struct ThemisOperationOptions {
+    /// Operation ID from `operation_id: "..."`
+    pub operation_id: Option<String>,
+    /// Rate limit tier from `rate_limit_tier: ...`
+    pub rate_limit_tier: Option<String>,
+    /// Timeout tier from `timeout_tier: ...`
+    pub timeout_tier: Option<String>,
+    /// Whether the operation is idempotent from `idempotent: true/false`
+    pub idempotent: Option<bool>,
+    /// Security schemes from `security: [...]`
+    pub security: Vec<String>,
 }
 
 /// Protobuf message definition.
@@ -1092,5 +1323,223 @@ message TestResponse {
         } else {
             panic!("Expected object schema");
         }
+    }
+
+    #[test]
+    fn test_themis_service_option() {
+        let proto = r#"
+syntax = "proto3";
+
+package users.v1;
+
+service UsersService {
+    option (themis.service) = { name: "users-service" owner: "platform-team" };
+
+    rpc GetUser(GetUserRequest) returns (GetUserResponse);
+}
+
+message GetUserRequest {
+    string user_id = 1;
+}
+
+message GetUserResponse {
+    string id = 1;
+}
+"#;
+
+        let result = parse_proto(proto, "fallback-service");
+        assert!(result.is_ok(), "Parse failed: {:?}", result.err());
+
+        let contract = result.unwrap();
+        // Service name should come from themis.service option
+        assert_eq!(contract.metadata.service_name, "users-service");
+        assert_eq!(contract.metadata.owner, Some("platform-team".to_string()));
+    }
+
+    #[test]
+    fn test_themis_service_option_fallback() {
+        let proto = r#"
+syntax = "proto3";
+
+package users.v1;
+
+service UsersService {
+    rpc GetUser(GetUserRequest) returns (GetUserResponse);
+}
+
+message GetUserRequest {
+    string user_id = 1;
+}
+
+message GetUserResponse {
+    string id = 1;
+}
+"#;
+
+        let result = parse_proto(proto, "fallback-service");
+        assert!(result.is_ok());
+
+        let contract = result.unwrap();
+        // Should use kebab-case service name when no themis.service option
+        assert_eq!(contract.metadata.service_name, "users");
+        assert_eq!(contract.metadata.owner, None);
+    }
+
+    #[test]
+    fn test_themis_operation_option() {
+        let proto = r#"
+syntax = "proto3";
+
+package users.v1;
+
+service UsersService {
+    rpc GetUser(GetUserRequest) returns (GetUserResponse);
+    option (themis.operation) = { operation_id: "getUser" rate_limit_tier: STANDARD timeout_tier: FAST idempotent: true };
+}
+
+message GetUserRequest {
+    string user_id = 1;
+}
+
+message GetUserResponse {
+    string id = 1;
+}
+"#;
+
+        let result = parse_proto(proto, "test-service");
+        assert!(result.is_ok(), "Parse failed: {:?}", result.err());
+
+        let contract = result.unwrap();
+        // Operation ID should come from themis.operation option
+        assert!(contract.operations.contains_key("getUser"));
+
+        let op = &contract.operations["getUser"];
+        assert!(op.themis_metadata.is_some());
+
+        let meta = op.themis_metadata.as_ref().unwrap();
+        assert_eq!(meta.rate_limit_tier, Some("STANDARD".to_string()));
+        assert_eq!(meta.timeout_tier, Some("FAST".to_string()));
+        assert_eq!(meta.idempotent, Some(true));
+    }
+
+    #[test]
+    fn test_themis_operation_with_security() {
+        let proto = r#"
+syntax = "proto3";
+
+package users.v1;
+
+service UsersService {
+    rpc GetUser(GetUserRequest) returns (GetUserResponse);
+    option (themis.operation) = { operation_id: "getUser" security: [SPIFFE, BEARER] };
+}
+
+message GetUserRequest {
+    string user_id = 1;
+}
+
+message GetUserResponse {
+    string id = 1;
+}
+"#;
+
+        let result = parse_proto(proto, "test-service");
+        assert!(result.is_ok(), "Parse failed: {:?}", result.err());
+
+        let contract = result.unwrap();
+        let op = &contract.operations["getUser"];
+
+        // Should have security requirements
+        assert_eq!(op.security.len(), 2);
+        assert_eq!(op.security[0].scheme, "spiffe");
+        assert_eq!(op.security[1].scheme, "bearer");
+    }
+
+    #[test]
+    fn test_operation_without_themis_option_generates_id() {
+        let proto = r#"
+syntax = "proto3";
+
+package users.v1;
+
+service UsersService {
+    rpc GetUser(GetUserRequest) returns (GetUserResponse);
+}
+
+message GetUserRequest {
+    string user_id = 1;
+}
+
+message GetUserResponse {
+    string id = 1;
+}
+"#;
+
+        let result = parse_proto(proto, "test-service");
+        assert!(result.is_ok());
+
+        let contract = result.unwrap();
+        // Without themis.operation option, ID should be generated from method name
+        assert!(contract.operations.contains_key("getUser"));
+        assert!(contract.operations["getUser"].themis_metadata.is_none());
+    }
+
+    #[test]
+    fn test_multiple_operations_with_themis_options() {
+        let proto = r#"
+syntax = "proto3";
+
+package users.v1;
+
+service UsersService {
+    option (themis.service) = { name: "users-service" owner: "platform-team" };
+
+    rpc GetUser(GetUserRequest) returns (GetUserResponse);
+    option (themis.operation) = { operation_id: "getUser" rate_limit_tier: STANDARD };
+
+    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
+    option (themis.operation) = { operation_id: "createUser" rate_limit_tier: STRICT idempotent: false };
+}
+
+message GetUserRequest {
+    string user_id = 1;
+}
+
+message GetUserResponse {
+    string id = 1;
+}
+
+message CreateUserRequest {
+    string name = 1;
+}
+
+message CreateUserResponse {
+    string id = 1;
+}
+"#;
+
+        let result = parse_proto(proto, "test-service");
+        assert!(result.is_ok(), "Parse failed: {:?}", result.err());
+
+        let contract = result.unwrap();
+
+        // Check service metadata
+        assert_eq!(contract.metadata.service_name, "users-service");
+        assert_eq!(contract.metadata.owner, Some("platform-team".to_string()));
+
+        // Check both operations exist
+        assert!(contract.operations.contains_key("getUser"));
+        assert!(contract.operations.contains_key("createUser"));
+
+        // Check getUser metadata
+        let get_user = &contract.operations["getUser"];
+        let meta = get_user.themis_metadata.as_ref().unwrap();
+        assert_eq!(meta.rate_limit_tier, Some("STANDARD".to_string()));
+
+        // Check createUser metadata
+        let create_user = &contract.operations["createUser"];
+        let meta = create_user.themis_metadata.as_ref().unwrap();
+        assert_eq!(meta.rate_limit_tier, Some("STRICT".to_string()));
+        assert_eq!(meta.idempotent, Some(false));
     }
 }
