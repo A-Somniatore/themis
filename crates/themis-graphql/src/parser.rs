@@ -7,9 +7,9 @@
 //!
 //! The parser extracts Themis-specific metadata from GraphQL directives:
 //!
-//! - `@themis(service: String!, owner: String!)` on SCHEMA
-//! - `@operation(operationId: String!, rateLimitTier: RateLimitTier, ...)` on FIELD_DEFINITION
-//! - `@deprecated(reason: String!, sunset: String)` on FIELD_DEFINITION
+//! - `@themis(service: String!, owner: String!)` on `SCHEMA`
+//! - `@operation(operationId: String!, rateLimitTier: RateLimitTier, ...)` on `FIELD_DEFINITION`
+//! - `@deprecated(reason: String!, sunset: String)` on `FIELD_DEFINITION`
 
 use std::collections::HashMap;
 use std::path::Path;
