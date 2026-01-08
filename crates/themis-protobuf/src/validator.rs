@@ -70,7 +70,7 @@ impl ProtoValidator {
     ///
     /// # Errors
     ///
-    /// Returns [`ProtobufError`] if validation fails with critical errors.
+    /// Returns [`crate::ProtobufError`] if validation fails with critical errors.
     pub fn validate(&self, contract: &Contract) -> Result<ValidationResult> {
         let mut result = ValidationResult::default();
 
