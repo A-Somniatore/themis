@@ -1007,18 +1007,43 @@ Themis MUST produce artifacts that:
 
 ---
 
-## Remaining Backlog (P2)
+## Phase T11: Polish & Completeness (Week 27) 🔄 IN PROGRESS
 
-> Items deferred from earlier phases, to be addressed as time permits.
+> **Purpose**: Complete remaining P2 backlog items for production readiness.
+> **Started**: 2026-01-07
+
+### Week 27: Backlog Cleanup
+
+| Task | Priority | Status |
+|------|----------|--------|
+| AsyncAPI lint rules (3 rules) | P2 | ✅ Complete |
+| npm package output (TypeScript) | P2 | ✅ Complete |
+| PyPI package output (Python) | P2 | ✅ Complete |
+| External `$ref` resolution | P2 | ⏳ In Progress |
+| Normalizer implementations | P2 | ⏳ In Progress |
+| Update outdated dependencies | P2 | ⏳ In Progress |
+
+### Completed in T11
+
+- **AsyncAPI lint rules**: 3 rules (channel-naming, message-schema, channel-convention) with 17 tests
+- **npm package output**: TypeScript codegen generates `package.json` and `tsconfig.json`
+- **PyPI package output**: Python codegen generates `pyproject.toml` and `README.md`
+- **Test count**: 609 tests passing (up from 578)
+- **Lint rules**: 21 total (up from 18)
+
+### Phase T11 Milestone
+
+**Criteria**: All P2 backlog items complete, normalizers functional, dependencies updated
+**Target**: 620+ tests passing
+
+---
+
+## Remaining Backlog (P3)
+
+> Lower priority items for future consideration.
 
 | Item                       | Location           | Priority | Status     |
 | -------------------------- | ------------------ | -------- | ---------- |
-| Update outdated deps       | `Cargo.toml`       | P2       | ⏳ Backlog |
-| Empty normalizer impl      | `normalizer.rs`    | P2       | ⏳ Backlog |
-| npm package output         | TypeScript codegen | P2       | ⏳ Backlog |
-| PyPI package output        | Python codegen     | P2       | ⏳ Backlog |
-| External `$ref` resolution | OpenAPI parser     | P2       | ⏳ Backlog |
-| AsyncAPI lint rules        | `themis-lint`      | P2       | ⏳ Backlog |
 | Rust SDK for CLI           | New crate          | P3       | ⏳ Backlog |
 | Terraform provider         | Integration        | P3       | ⏳ Backlog |
 
@@ -1066,9 +1091,10 @@ Phase T10 has been completed with the following deliverables:
 | T7: GraphQL       | Week 19 | GraphQL SDL contracts supported         | ✅     |
 | T8: AsyncAPI      | Week 21 | Event-driven contracts supported        | ✅     |
 | T9: Languages     | Week 24 | C++ and Go code generation              | ✅     |
-| T10: Linting+JSON | Week 26 | JSON Schema output + format rules + GA  | 🔄     |
+| T10: Linting+JSON | Week 26 | JSON Schema output + format rules + GA  | ✅     |
+| T11: Polish       | Week 27 | Normalizers, $ref, deps updated         | 🔄     |
 
-**Total Tests**: 543 tests passing across all crates (+ ~40 new in T10)
+**Total Tests**: 609 tests passing across all crates
 
 ---
 
