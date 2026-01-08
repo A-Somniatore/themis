@@ -8,7 +8,9 @@
 //! - [`versioning`]: Versioning rule checks
 //! - [`protobuf`]: Protobuf-specific checks
 //! - [`graphql`]: GraphQL-specific checks
+//! - [`asyncapi`]: AsyncAPI-specific checks
 
+pub mod asyncapi;
 pub mod documentation;
 pub mod graphql;
 pub mod naming;
@@ -28,6 +30,7 @@ pub fn all_rules() -> Vec<Box<dyn Rule>> {
     rules.extend(versioning::all_rules());
     rules.extend(protobuf::all_rules());
     rules.extend(graphql::all_rules());
+    rules.extend(asyncapi::all_rules());
     rules
 }
 
@@ -38,7 +41,7 @@ mod tests {
     #[test]
     fn test_all_rules_count() {
         let rules = all_rules();
-        // 3 naming + 3 documentation + 4 security + 4 versioning + 2 protobuf + 2 graphql = 18
-        assert_eq!(rules.len(), 18);
+        // 3 naming + 3 documentation + 4 security + 4 versioning + 2 protobuf + 2 graphql + 3 asyncapi = 21
+        assert_eq!(rules.len(), 21);
     }
 }

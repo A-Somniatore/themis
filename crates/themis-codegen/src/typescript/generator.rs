@@ -662,6 +662,119 @@ impl TypeScriptGenerator {
 
         output
     }
+
+    /// Generates package.json for npm publishing.
+    fn generate_package_json(&self, contract: &Contract) -> String {
+        let package_name = self
+            .config
+            .module_name
+            .clone()
+            .unwrap_or_else(|| {
+                format!(
+                    "@themis/{}",
+                    contract.metadata.service_name.to_lowercase().replace(' ', "-")
+                )
+            });
+
+        let version = self
+            .config
+            .package_version
+            .clone()
+            .unwrap_or_else(|| contract.version.to_string());
+
+        let description = contract
+            .metadata
+            .description
+            .clone()
+            .unwrap_or_else(|| format!("Generated TypeScript client for {}", contract.metadata.service_name));
+
+        let mut output = String::new();
+        output.push_str("{\n");
+        let _ = writeln!(output, "  \"name\": \"{package_name}\",");
+        let _ = writeln!(output, "  \"version\": \"{version}\",");
+        let _ = writeln!(output, "  \"description\": \"{description}\",");
+        output.push_str("  \"main\": \"dist/index.js\",\n");
+        output.push_str("  \"module\": \"dist/index.mjs\",\n");
+        output.push_str("  \"types\": \"dist/index.d.ts\",\n");
+        output.push_str("  \"exports\": {\n");
+        output.push_str("    \".\": {\n");
+        output.push_str("      \"import\": \"./dist/index.mjs\",\n");
+        output.push_str("      \"require\": \"./dist/index.js\",\n");
+        output.push_str("      \"types\": \"./dist/index.d.ts\"\n");
+        output.push_str("    }\n");
+        output.push_str("  },\n");
+        output.push_str("  \"files\": [\n");
+        output.push_str("    \"dist\",\n");
+        output.push_str("    \"src\"\n");
+        output.push_str("  ],\n");
+
+        // Author
+        if let Some(author) = &self.config.package_author {
+            let _ = writeln!(output, "  \"author\": \"{author}\",");
+        }
+
+        // Repository
+        if let Some(repo) = &self.config.package_repository {
+            output.push_str("  \"repository\": {\n");
+            output.push_str("    \"type\": \"git\",\n");
+            let _ = writeln!(output, "    \"url\": \"{repo}\"");
+            output.push_str("  },\n");
+        } else if let Some(repo) = &contract.metadata.repository {
+            output.push_str("  \"repository\": {\n");
+            output.push_str("    \"type\": \"git\",\n");
+            let _ = writeln!(output, "    \"url\": \"{repo}\"");
+            output.push_str("  },\n");
+        }
+
+        output.push_str("  \"scripts\": {\n");
+        output.push_str("    \"build\": \"tsc\",\n");
+        output.push_str("    \"prepublishOnly\": \"npm run build\"\n");
+        output.push_str("  },\n");
+        output.push_str("  \"devDependencies\": {\n");
+        output.push_str("    \"typescript\": \"^5.0.0\"\n");
+        output.push_str("  },\n");
+        output.push_str("  \"keywords\": [\n");
+        let _ = writeln!(output, "    \"{}\",", contract.metadata.service_name.to_lowercase());
+        output.push_str("    \"themis\",\n");
+        output.push_str("    \"api-client\",\n");
+        output.push_str("    \"generated\"\n");
+        output.push_str("  ],\n");
+        output.push_str("  \"license\": \"MIT\"\n");
+        output.push_str("}\n");
+
+        output
+    }
+
+    /// Generates tsconfig.json for TypeScript compilation.
+    fn generate_tsconfig(&self) -> String {
+        r#"{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "declaration": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": false,
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
+"#.to_string()
+    }
 }
 
 impl CodeGenerator for TypeScriptGenerator {
@@ -682,21 +795,41 @@ impl CodeGenerator for TypeScriptGenerator {
 
         let mut output = GeneratedCode::new();
 
-        // Generate types file
-        let types_content = self.generate_types_file(contract)?;
-        output.add_file(GeneratedFile::new("types.ts", types_content));
+        // Generate package files if enabled
+        if self.config.generate_package_files {
+            // Package files go in root, source files go in src/
+            let package_json = self.generate_package_json(contract);
+            output.add_file(GeneratedFile::new("package.json", package_json));
 
-        // Generate client file
-        let client_content = self.generate_client_file(contract)?;
-        output.add_file(GeneratedFile::new("client.ts", client_content));
+            let tsconfig = self.generate_tsconfig();
+            output.add_file(GeneratedFile::new("tsconfig.json", tsconfig));
 
-        // Generate handlers file
-        let handlers_content = self.generate_handlers_file(contract)?;
-        output.add_file(GeneratedFile::new("handlers.ts", handlers_content));
+            // Source files go in src/ directory
+            let types_content = self.generate_types_file(contract)?;
+            output.add_file(GeneratedFile::new("src/types.ts", types_content));
 
-        // Generate index file
-        let index_content = self.generate_index_file(contract);
-        output.add_file(GeneratedFile::new("index.ts", index_content));
+            let client_content = self.generate_client_file(contract)?;
+            output.add_file(GeneratedFile::new("src/client.ts", client_content));
+
+            let handlers_content = self.generate_handlers_file(contract)?;
+            output.add_file(GeneratedFile::new("src/handlers.ts", handlers_content));
+
+            let index_content = self.generate_index_file(contract);
+            output.add_file(GeneratedFile::new("src/index.ts", index_content));
+        } else {
+            // Standard output (no package structure)
+            let types_content = self.generate_types_file(contract)?;
+            output.add_file(GeneratedFile::new("types.ts", types_content));
+
+            let client_content = self.generate_client_file(contract)?;
+            output.add_file(GeneratedFile::new("client.ts", client_content));
+
+            let handlers_content = self.generate_handlers_file(contract)?;
+            output.add_file(GeneratedFile::new("handlers.ts", handlers_content));
+
+            let index_content = self.generate_index_file(contract);
+            output.add_file(GeneratedFile::new("index.ts", index_content));
+        }
 
         Ok(output)
     }
@@ -1030,5 +1163,53 @@ mod tests {
         assert!(index_file.content.contains("export * from './handlers'"));
         assert!(index_file.content.contains("createUsersServiceClient"));
         assert!(index_file.content.contains("createUsersServiceRouter"));
+    }
+
+    #[test]
+    fn test_typescript_generator_with_package_files() {
+        let config = GeneratorConfig::default().with_package_files(true);
+        let generator = TypeScriptGenerator::new(config);
+        let contract = create_test_contract();
+
+        let result = generator.generate(&contract).unwrap();
+
+        // Should have package.json and tsconfig.json
+        let package_json = result.get_file("package.json").unwrap();
+        assert!(package_json.content.contains("\"name\":"));
+        assert!(package_json.content.contains("@themis/users-service"));
+        assert!(package_json.content.contains("\"version\":"));
+        assert!(package_json.content.contains("\"main\": \"dist/index.js\""));
+        assert!(package_json.content.contains("typescript"));
+
+        let tsconfig = result.get_file("tsconfig.json").unwrap();
+        assert!(tsconfig.content.contains("\"target\": \"ES2020\""));
+        assert!(tsconfig.content.contains("\"declaration\": true"));
+
+        // Source files should be in src/ directory
+        assert!(result.get_file("src/types.ts").is_some());
+        assert!(result.get_file("src/client.ts").is_some());
+        assert!(result.get_file("src/handlers.ts").is_some());
+        assert!(result.get_file("src/index.ts").is_some());
+    }
+
+    #[test]
+    fn test_typescript_package_json_custom_options() {
+        let config = GeneratorConfig::default()
+            .with_package_files(true)
+            .with_module_name("@myorg/my-client".to_string())
+            .with_package_version("2.0.0".to_string())
+            .with_package_author("Test Author".to_string())
+            .with_package_repository("https://github.com/test/repo".to_string());
+
+        let generator = TypeScriptGenerator::new(config);
+        let contract = create_test_contract();
+
+        let result = generator.generate(&contract).unwrap();
+        let package_json = result.get_file("package.json").unwrap();
+
+        assert!(package_json.content.contains("@myorg/my-client"));
+        assert!(package_json.content.contains("\"version\": \"2.0.0\""));
+        assert!(package_json.content.contains("\"author\": \"Test Author\""));
+        assert!(package_json.content.contains("https://github.com/test/repo"));
     }
 }

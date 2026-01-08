@@ -709,6 +709,151 @@ impl PythonGenerator {
 
         output
     }
+
+    /// Generates pyproject.toml for PyPI publishing.
+    fn generate_pyproject_toml(&self, contract: &Contract) -> String {
+        let package_name = self
+            .config
+            .module_name
+            .clone()
+            .unwrap_or_else(|| {
+                format!(
+                    "themis-{}",
+                    contract.metadata.service_name.to_snake_case().replace('_', "-")
+                )
+            });
+
+        let version = self
+            .config
+            .package_version
+            .clone()
+            .unwrap_or_else(|| contract.version.to_string());
+
+        let description = contract
+            .metadata
+            .description
+            .clone()
+            .unwrap_or_else(|| format!("Generated Python client for {}", contract.metadata.service_name));
+
+        let mut output = String::new();
+
+        // Build system
+        output.push_str("[build-system]\n");
+        output.push_str("requires = [\"hatchling\"]\n");
+        output.push_str("build-backend = \"hatchling.build\"\n\n");
+
+        // Project metadata
+        output.push_str("[project]\n");
+        let _ = writeln!(output, "name = \"{package_name}\"");
+        let _ = writeln!(output, "version = \"{version}\"");
+        let _ = writeln!(output, "description = \"{description}\"");
+        output.push_str("readme = \"README.md\"\n");
+        output.push_str("requires-python = \">=3.9\"\n");
+        output.push_str("license = \"MIT\"\n");
+
+        // Author
+        if let Some(author) = &self.config.package_author {
+            let _ = writeln!(output, "authors = [{{ name = \"{author}\" }}]");
+        }
+
+        // Keywords
+        output.push_str("keywords = [\n");
+        let _ = writeln!(output, "    \"{}\",", contract.metadata.service_name.to_lowercase());
+        output.push_str("    \"themis\",\n");
+        output.push_str("    \"api-client\",\n");
+        output.push_str("    \"generated\",\n");
+        output.push_str("]\n");
+
+        // Classifiers
+        output.push_str("classifiers = [\n");
+        output.push_str("    \"Development Status :: 4 - Beta\",\n");
+        output.push_str("    \"Intended Audience :: Developers\",\n");
+        output.push_str("    \"License :: OSI Approved :: MIT License\",\n");
+        output.push_str("    \"Programming Language :: Python :: 3\",\n");
+        output.push_str("    \"Programming Language :: Python :: 3.9\",\n");
+        output.push_str("    \"Programming Language :: Python :: 3.10\",\n");
+        output.push_str("    \"Programming Language :: Python :: 3.11\",\n");
+        output.push_str("    \"Programming Language :: Python :: 3.12\",\n");
+        output.push_str("    \"Typing :: Typed\",\n");
+        output.push_str("]\n\n");
+
+        // Dependencies
+        output.push_str("dependencies = [\n");
+        output.push_str("    \"httpx>=0.24.0\",\n");
+        output.push_str("    \"pydantic>=2.0.0\",\n");
+        output.push_str("]\n\n");
+
+        // Optional dependencies
+        output.push_str("[project.optional-dependencies]\n");
+        output.push_str("fastapi = [\n");
+        output.push_str("    \"fastapi>=0.100.0\",\n");
+        output.push_str("]\n");
+        output.push_str("dev = [\n");
+        output.push_str("    \"pytest>=7.0.0\",\n");
+        output.push_str("    \"pytest-asyncio>=0.21.0\",\n");
+        output.push_str("    \"mypy>=1.0.0\",\n");
+        output.push_str("]\n\n");
+
+        // URLs
+        output.push_str("[project.urls]\n");
+        if let Some(repo) = &self.config.package_repository {
+            let _ = writeln!(output, "Repository = \"{repo}\"");
+        } else if let Some(repo) = &contract.metadata.repository {
+            let _ = writeln!(output, "Repository = \"{repo}\"");
+        }
+        if let Some(docs) = &contract.metadata.documentation_url {
+            let _ = writeln!(output, "Documentation = \"{docs}\"");
+        }
+        output.push('\n');
+
+        // Hatch build config
+        output.push_str("[tool.hatch.build.targets.wheel]\n");
+        let package_dir = package_name.replace('-', "_");
+        let _ = writeln!(output, "packages = [\"src/{package_dir}\"]");
+
+        output
+    }
+
+    /// Generates a basic README.md for the package.
+    fn generate_readme(&self, contract: &Contract) -> String {
+        let service_name = &contract.metadata.service_name;
+        let package_name = self
+            .config
+            .module_name
+            .clone()
+            .unwrap_or_else(|| {
+                format!(
+                    "themis-{}",
+                    contract.metadata.service_name.to_snake_case().replace('_', "-")
+                )
+            });
+        let module_name = package_name.replace('-', "_");
+
+        let mut output = String::new();
+
+        let _ = writeln!(output, "# {service_name} Python Client\n");
+        
+        if let Some(desc) = &contract.metadata.description {
+            let _ = writeln!(output, "{desc}\n");
+        }
+
+        output.push_str("## Installation\n\n");
+        output.push_str("```bash\n");
+        let _ = writeln!(output, "pip install {package_name}");
+        output.push_str("```\n\n");
+
+        output.push_str("## Usage\n\n");
+        output.push_str("```python\n");
+        let _ = writeln!(output, "from {module_name} import create_{}_client\n", contract.metadata.service_name.to_snake_case());
+        output.push_str("# Create a client instance\n");
+        let _ = writeln!(output, "client = create_{}_client(\"https://api.example.com\")", contract.metadata.service_name.to_snake_case());
+        output.push_str("```\n\n");
+
+        output.push_str("## Generated by Themis\n\n");
+        output.push_str("This package was automatically generated from an API contract using [Themis](https://github.com/A-Somniatore/themis).\n");
+
+        output
+    }
 }
 
 impl CodeGenerator for PythonGenerator {
@@ -729,21 +874,56 @@ impl CodeGenerator for PythonGenerator {
 
         let mut output = GeneratedCode::new();
 
-        // Generate types file
-        let types_content = self.generate_types_file(contract)?;
-        output.add_file(GeneratedFile::new("types.py", types_content));
+        // Generate package files if enabled
+        if self.config.generate_package_files {
+            let package_name = self
+                .config
+                .module_name
+                .clone()
+                .unwrap_or_else(|| {
+                    format!(
+                        "themis-{}",
+                        contract.metadata.service_name.to_snake_case().replace('_', "-")
+                    )
+                });
+            let package_dir = package_name.replace('-', "_");
 
-        // Generate client file
-        let client_content = self.generate_client_file(contract)?;
-        output.add_file(GeneratedFile::new("client.py", client_content));
+            // Package files go in root
+            let pyproject = self.generate_pyproject_toml(contract);
+            output.add_file(GeneratedFile::new("pyproject.toml", pyproject));
 
-        // Generate handlers file
-        let handlers_content = self.generate_handlers_file(contract)?;
-        output.add_file(GeneratedFile::new("handlers.py", handlers_content));
+            let readme = self.generate_readme(contract);
+            output.add_file(GeneratedFile::new("README.md", readme));
 
-        // Generate __init__.py
-        let init_content = self.generate_init_file(contract);
-        output.add_file(GeneratedFile::new("__init__.py", init_content));
+            // Source files go in src/<package_name>/
+            let types_content = self.generate_types_file(contract)?;
+            output.add_file(GeneratedFile::new(format!("src/{package_dir}/types.py"), types_content));
+
+            let client_content = self.generate_client_file(contract)?;
+            output.add_file(GeneratedFile::new(format!("src/{package_dir}/client.py"), client_content));
+
+            let handlers_content = self.generate_handlers_file(contract)?;
+            output.add_file(GeneratedFile::new(format!("src/{package_dir}/handlers.py"), handlers_content));
+
+            let init_content = self.generate_init_file(contract);
+            output.add_file(GeneratedFile::new(format!("src/{package_dir}/__init__.py"), init_content));
+
+            // py.typed marker for PEP 561
+            output.add_file(GeneratedFile::new(format!("src/{package_dir}/py.typed"), String::new()));
+        } else {
+            // Standard output (no package structure)
+            let types_content = self.generate_types_file(contract)?;
+            output.add_file(GeneratedFile::new("types.py", types_content));
+
+            let client_content = self.generate_client_file(contract)?;
+            output.add_file(GeneratedFile::new("client.py", client_content));
+
+            let handlers_content = self.generate_handlers_file(contract)?;
+            output.add_file(GeneratedFile::new("handlers.py", handlers_content));
+
+            let init_content = self.generate_init_file(contract);
+            output.add_file(GeneratedFile::new("__init__.py", init_content));
+        }
 
         Ok(output)
     }
@@ -1066,5 +1246,58 @@ mod tests {
         assert!(init_file.content.contains("__all__"));
         assert!(init_file.content.contains("UsersServiceClient"));
         assert!(init_file.content.contains("create_users_service_client"));
+    }
+
+    #[test]
+    fn test_python_generator_pyproject_toml() {
+        let config = GeneratorConfig::default()
+            .with_package_files(true)
+            .with_package_version("1.0.0".to_string())
+            .with_package_author("Test Author <test@example.com>".to_string())
+            .with_package_repository("https://github.com/test/users-service".to_string());
+        let generator = PythonGenerator::new(config);
+        let contract = create_test_contract();
+
+        let result = generator.generate(&contract).unwrap();
+
+        // Check pyproject.toml exists
+        let pyproject = result.get_file("pyproject.toml").unwrap();
+        assert!(pyproject.content.contains("[build-system]"));
+        assert!(pyproject.content.contains("requires = [\"hatchling\"]"));
+        assert!(pyproject.content.contains("name = \"themis-users-service\""));
+        assert!(pyproject.content.contains("version = \"1.0.0\""));
+        assert!(pyproject.content.contains("Test Author"));
+        assert!(pyproject.content.contains("https://github.com/test/users-service"));
+        assert!(pyproject.content.contains("httpx>=0.24.0"));
+        assert!(pyproject.content.contains("pydantic>=2.0.0"));
+
+        // Check README.md exists
+        let readme = result.get_file("README.md").unwrap();
+        assert!(readme.content.contains("Python Client"));
+        assert!(readme.content.contains("pip install themis-users-service"));
+    }
+
+    #[test]
+    fn test_python_generator_package_structure() {
+        let config = GeneratorConfig::default().with_package_files(true);
+        let generator = PythonGenerator::new(config);
+        let contract = create_test_contract();
+
+        let result = generator.generate(&contract).unwrap();
+
+        // Check files are in proper src/<package>/ structure
+        assert!(result.get_file("src/themis_users_service/types.py").is_some());
+        assert!(result.get_file("src/themis_users_service/client.py").is_some());
+        assert!(result.get_file("src/themis_users_service/handlers.py").is_some());
+        assert!(result.get_file("src/themis_users_service/__init__.py").is_some());
+        assert!(result.get_file("src/themis_users_service/py.typed").is_some());
+
+        // Package files at root
+        assert!(result.get_file("pyproject.toml").is_some());
+        assert!(result.get_file("README.md").is_some());
+
+        // Old flat structure files should NOT exist
+        assert!(result.get_file("types.py").is_none());
+        assert!(result.get_file("client.py").is_none());
     }
 }

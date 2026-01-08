@@ -34,6 +34,18 @@ pub struct GeneratorConfig {
 
     /// Suffix to add to all generated type names.
     pub type_suffix: Option<String>,
+
+    /// Whether to generate package files (package.json, pyproject.toml, etc.)
+    pub generate_package_files: bool,
+
+    /// Package version (defaults to contract version)
+    pub package_version: Option<String>,
+
+    /// Package author (for npm, PyPI, etc.)
+    pub package_author: Option<String>,
+
+    /// Package repository URL
+    pub package_repository: Option<String>,
 }
 
 impl Default for GeneratorConfig {
@@ -49,6 +61,10 @@ impl Default for GeneratorConfig {
             flatten_wrappers: false,
             type_prefix: None,
             type_suffix: None,
+            generate_package_files: false,
+            package_version: None,
+            package_author: None,
+            package_repository: None,
         }
     }
 }
@@ -67,6 +83,10 @@ impl GeneratorConfig {
             flatten_wrappers: false,
             type_prefix: None,
             type_suffix: None,
+            generate_package_files: false,
+            package_version: None,
+            package_author: None,
+            package_repository: None,
         }
     }
 
@@ -103,6 +123,30 @@ impl GeneratorConfig {
     /// Sets a type prefix.
     pub fn with_type_prefix(mut self, prefix: impl Into<String>) -> Self {
         self.type_prefix = Some(prefix.into());
+        self
+    }
+
+    /// Enables package file generation (package.json, pyproject.toml, etc.)
+    pub const fn with_package_files(mut self, enabled: bool) -> Self {
+        self.generate_package_files = enabled;
+        self
+    }
+
+    /// Sets the package version.
+    pub fn with_package_version(mut self, version: impl Into<String>) -> Self {
+        self.package_version = Some(version.into());
+        self
+    }
+
+    /// Sets the package author.
+    pub fn with_package_author(mut self, author: impl Into<String>) -> Self {
+        self.package_author = Some(author.into());
+        self
+    }
+
+    /// Sets the package repository URL.
+    pub fn with_package_repository(mut self, repo: impl Into<String>) -> Self {
+        self.package_repository = Some(repo.into());
         self
     }
 }
