@@ -3,6 +3,9 @@ resolver = "2"
 members = [
     "crates/themis-core",
     "crates/themis-openapi",
+    "crates/themis-protobuf",
+    "crates/themis-graphql",
+    "crates/themis-asyncapi",
     "crates/themis-lint",
     "crates/themis-compat",
     "crates/themis-codegen",
@@ -48,6 +51,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # Testing
 proptest = "1.0"
+tempfile = "3.15"
 
 # HTTP client
 reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
@@ -64,11 +68,25 @@ base64 = "0.22"
 # Workspace crates
 themis-core = { path = "crates/themis-core" }
 themis-openapi = { path = "crates/themis-openapi" }
+themis-protobuf = { path = "crates/themis-protobuf" }
+themis-graphql = { path = "crates/themis-graphql" }
+themis-asyncapi = { path = "crates/themis-asyncapi" }
 themis-lint = { path = "crates/themis-lint" }
 themis-compat = { path = "crates/themis-compat" }
 themis-codegen = { path = "crates/themis-codegen" }
 themis-artifact = { path = "crates/themis-artifact" }
 themis-registry = { path = "crates/themis-registry" }
+
+# Protobuf parsing
+prost-types = "0.13"
+protobuf-parse = "3.4"
+protobuf = "3.4"
+
+# GraphQL parsing
+graphql-parser = "0.4"
+
+# AsyncAPI parsing (uses serde for YAML/JSON)
+# AsyncAPI doesn't have a dedicated parser, we use serde_yaml
 
 # Case conversion
 heck = "0.5"

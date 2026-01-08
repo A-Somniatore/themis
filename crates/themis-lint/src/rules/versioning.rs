@@ -389,4 +389,3 @@ mod tests {
         assert_eq!(issues[0].severity, Severity::Error);
     }
 }
-

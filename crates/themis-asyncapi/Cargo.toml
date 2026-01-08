@@ -1,0 +1,22 @@
+[package]
+name = "themis-asyncapi"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "AsyncAPI 3.0 parser and validator for Themis contract governance"
+
+[dependencies]
+themis-core = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+thiserror = { workspace = true }
+indexmap = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
+
+[lints]
+workspace = true

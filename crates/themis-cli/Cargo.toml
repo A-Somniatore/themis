@@ -14,6 +14,9 @@ path = "src/main.rs"
 [dependencies]
 themis-core = { workspace = true }
 themis-openapi = { workspace = true }
+themis-protobuf = { path = "../themis-protobuf" }
+themis-graphql = { path = "../themis-graphql" }
+themis-asyncapi = { path = "../themis-asyncapi" }
 themis-lint = { workspace = true }
 themis-compat = { path = "../themis-compat" }
 themis-codegen = { path = "../themis-codegen" }

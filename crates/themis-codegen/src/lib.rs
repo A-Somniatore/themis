@@ -32,8 +32,9 @@
 //! - Rust (MVP)
 //! - TypeScript (MVP)
 //! - Python (MVP)
-//! - C++ (future)
-//! - Go (future)
+//! - C++
+//! - Go
+//! - JSON Schema (for generic codegen with quicktype, etc.)
 
 // Allow some pedantic clippy lints that are overly strict for codegen
 #![allow(clippy::struct_excessive_bools)]
@@ -43,14 +44,20 @@
 #![allow(clippy::missing_errors_doc)]
 
 mod config;
+mod cpp;
 mod error;
+mod go;
+mod jsonschema;
 mod python;
 mod rust;
 mod traits;
 mod typescript;
 
 pub use config::{GeneratorConfig, NamingConvention};
+pub use cpp::CppGenerator;
 pub use error::{CodegenError, CodegenResult};
+pub use go::GoGenerator;
+pub use jsonschema::JsonSchemaGenerator;
 pub use python::PythonGenerator;
 pub use rust::RustGenerator;
 pub use traits::{CodeGenerator, GeneratedCode, GeneratedFile};

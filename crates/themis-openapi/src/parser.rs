@@ -123,10 +123,7 @@ impl<'a> ReferenceResolver<'a> {
     /// Extracts the component name from a JSON pointer reference.
     ///
     /// E.g., "#/components/parameters/UserIdParam" -> "UserIdParam"
-    fn extract_component_name<'b>(
-        ref_path: &'b str,
-        expected_type: &str,
-    ) -> ThemisResult<&'b str> {
+    fn extract_component_name<'b>(ref_path: &'b str, expected_type: &str) -> ThemisResult<&'b str> {
         let prefix = format!("#/components/{expected_type}/");
         ref_path
             .strip_prefix(&prefix)
@@ -1413,7 +1410,8 @@ paths:
 
         let err = result.unwrap_err();
         assert!(
-            err.to_string().contains("Unresolved request body reference"),
+            err.to_string()
+                .contains("Unresolved request body reference"),
             "Expected unresolved request body error, got: {err}"
         );
     }
@@ -1458,10 +1456,18 @@ components:
         let list_items = contract.operations.get("listItems").unwrap();
         assert_eq!(list_items.parameters.len(), 2);
 
-        let page_param = list_items.parameters.iter().find(|p| p.name == "page").unwrap();
+        let page_param = list_items
+            .parameters
+            .iter()
+            .find(|p| p.name == "page")
+            .unwrap();
         assert!(!page_param.required);
 
-        let limit_param = list_items.parameters.iter().find(|p| p.name == "limit").unwrap();
+        let limit_param = list_items
+            .parameters
+            .iter()
+            .find(|p| p.name == "limit")
+            .unwrap();
         assert!(!limit_param.required);
     }
 
@@ -1575,10 +1581,16 @@ components:
 
         // Check headers were resolved
         let total_count = response.headers.get("X-Total-Count").unwrap();
-        assert_eq!(total_count.description, Some("Total number of items".to_string()));
+        assert_eq!(
+            total_count.description,
+            Some("Total number of items".to_string())
+        );
 
         let rate_limit = response.headers.get("X-Rate-Limit").unwrap();
-        assert_eq!(rate_limit.description, Some("Rate limit remaining".to_string()));
+        assert_eq!(
+            rate_limit.description,
+            Some("Rate limit remaining".to_string())
+        );
         assert!(rate_limit.required);
     }
 
