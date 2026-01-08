@@ -1990,6 +1990,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml",
+ "tempfile",
  "themis-core",
  "thiserror 2.0.17",
 ]

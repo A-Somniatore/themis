@@ -210,6 +210,50 @@ pub fn parse_openapi_file(path: &Path) -> ThemisResult<Contract> {
     parse_openapi(&content)
 }
 
+/// Parses an OpenAPI specification from a file, resolving external `$ref` references.
+///
+/// This is useful when your OpenAPI spec has external file references like:
+/// - `$ref: "./schemas/user.yaml"`
+/// - `$ref: "../common/errors.yaml#/components/schemas/Error"`
+///
+/// # Arguments
+///
+/// * `path` - Path to the OpenAPI specification file
+///
+/// # Returns
+///
+/// A normalized [`Contract`] with all external references resolved.
+///
+/// # Errors
+///
+/// Returns [`ThemisError`] if:
+/// - The file cannot be read
+/// - External reference files cannot be resolved
+/// - Circular references are detected
+/// - The content is not a valid OpenAPI specification
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use themis_openapi::parse_openapi_bundled;
+/// use std::path::Path;
+///
+/// let contract = parse_openapi_bundled(Path::new("api.yaml"))?;
+/// ```
+pub fn parse_openapi_bundled(path: &Path) -> ThemisResult<Contract> {
+    use crate::bundler::{BundleOptions, OpenApiBundler};
+    
+    let mut ref_bundler = OpenApiBundler::new(BundleOptions::default());
+    let bundled_doc = ref_bundler.bundle_file(path)?;
+    
+    // Convert bundled JSON value back to string for parsing
+    let content = serde_json::to_string(&bundled_doc).map_err(|e| ThemisError::Internal(
+        format!("Failed to serialize bundled document: {e}")
+    ))?;
+    
+    parse_openapi(&content)
+}
+
 /// Converts an `openapiv3::OpenAPI` structure to a Themis `Contract`.
 fn convert_openapi_to_contract(openapi: &OpenAPI) -> ThemisResult<Contract> {
     // Parse version from info.version
