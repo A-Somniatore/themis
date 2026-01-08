@@ -3,8 +3,8 @@
 > **Version**: 2.0.0  
 > **Created**: 2026-01-04  
 > **Last Updated**: 2026-01-09  
-> **Target Completion**: Week 24 (Full V1 with all contract formats) + Phase T10 (Enhanced Linting)
-> **Current Progress**: Phase T10 COMPLETE ✅ - All MVP phases complete!
+> **Target Completion**: Week 24 (Full V1 with all contract formats) + Phase T11 (Polish & Completeness)
+> **Current Progress**: Phase T11 COMPLETE ✅ - All MVP phases complete!
 
 ---
 
@@ -227,20 +227,14 @@ This enables:
 | **GraphQL Parser** | Missing `@themis` directive parsing | Medium - no authorization metadata |
 | **GraphQL Validator** | Missing GraphQL-specific lint rules | Low |
 | **Protobuf Parser** | Missing `(themis.operation_id)` extension parsing | Medium - can't extract Themis metadata |
-| **External `$ref` Resolution** | Not implemented (internal only) | Low - listed as P2 |
 
 ### ❌ Not Implemented (Backlog)
 
 | Feature | Priority | Notes |
 |---------|----------|-------|
-| **JSON Schema output mode** | P2 | Enables generic codegen via quicktype |
 | **themis-action** (GitHub Action) | P2 | action.yml, Dockerfile not created |
 | **Protobuf-specific lint rules** | P2 | proto/package-name, proto/service-name |
 | **GraphQL-specific lint rules** | P2 | graphql/operation-directive, graphql/input-naming |
-| **AsyncAPI-specific lint rules** | P2 | async/channel-naming, async/message-schema |
-| **External `$ref` Resolution** | P2 | Only internal refs supported currently |
-| **npm package output** | P3 | TypeScript codegen enhancement |
-| **PyPI package output** | P3 | Python codegen enhancement |
 
 ### 🔴 Critical: Spec vs Roadmap Mismatch
 
@@ -1007,10 +1001,10 @@ Themis MUST produce artifacts that:
 
 ---
 
-## Phase T11: Polish & Completeness (Week 27) 🔄 IN PROGRESS
+## Phase T11: Polish & Completeness (Week 27) ✅ COMPLETE
 
 > **Purpose**: Complete remaining P2 backlog items for production readiness.
-> **Started**: 2026-01-07
+> **Completed**: 2026-01-09
 
 ### Week 27: Backlog Cleanup
 
@@ -1019,22 +1013,30 @@ Themis MUST produce artifacts that:
 | AsyncAPI lint rules (3 rules) | P2 | ✅ Complete |
 | npm package output (TypeScript) | P2 | ✅ Complete |
 | PyPI package output (Python) | P2 | ✅ Complete |
-| External `$ref` resolution | P2 | ⏳ In Progress |
-| Normalizer implementations | P2 | ⏳ In Progress |
-| Update outdated dependencies | P2 | ⏳ In Progress |
+| Normalizer implementations | P2 | ✅ Complete |
+| External `$ref` resolution | P2 | ✅ Complete |
+| Update outdated dependencies | P2 | ✅ Complete |
 
 ### Completed in T11
 
 - **AsyncAPI lint rules**: 3 rules (channel-naming, message-schema, channel-convention) with 17 tests
 - **npm package output**: TypeScript codegen generates `package.json` and `tsconfig.json`
 - **PyPI package output**: Python codegen generates `pyproject.toml` and `README.md`
-- **Test count**: 609 tests passing (up from 578)
+- **Normalizer implementations**: Full normalizers for OpenAPI, Protobuf, and GraphQL
+- **External `$ref` resolution**: OpenApiBundler for resolving external file references
+  - Supports relative paths (`./schemas/user.yaml`)
+  - Supports parent paths (`../common/errors.yaml`)
+  - Supports fragment refs (`file.yaml#/components/schemas/User`)
+  - Circular reference detection
+  - URL refs disabled by default (security)
+- **Dependencies**: Updated to latest compatible versions (h2, rustls, syn, url, zerocopy)
+- **Test count**: 633 tests passing (up from 609)
 - **Lint rules**: 21 total (up from 18)
 
 ### Phase T11 Milestone
 
 **Criteria**: All P2 backlog items complete, normalizers functional, dependencies updated
-**Target**: 620+ tests passing
+**Result**: ✅ All criteria met - 633 tests passing
 
 ---
 
@@ -1092,9 +1094,9 @@ Phase T10 has been completed with the following deliverables:
 | T8: AsyncAPI      | Week 21 | Event-driven contracts supported        | ✅     |
 | T9: Languages     | Week 24 | C++ and Go code generation              | ✅     |
 | T10: Linting+JSON | Week 26 | JSON Schema output + format rules + GA  | ✅     |
-| T11: Polish       | Week 27 | Normalizers, $ref, deps updated         | 🔄     |
+| T11: Polish       | Week 27 | Normalizers, $ref, deps updated         | ✅     |
 
-**Total Tests**: 609 tests passing across all crates
+**Total Tests**: 633 tests passing across all crates
 
 ---
 
