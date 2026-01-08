@@ -18,6 +18,8 @@
 7. [GraphQL Contracts](#5c-graphql-contracts)
 8. [Contract Lifecycle](#6-contract-lifecycle)
 9. [Versioning & Compatibility](#7-versioning--compatibility)
+   - [7.4 Schema Evolution Strategy](#74-schema-evolution-strategy)
+   - [7.5 Registry Topology](#75-registry-topology)
 10. [CI Pipeline](#8-ci-pipeline)
 11. [Code Generation](#9-code-generation)
 12. [Artifact Publishing](#10-artifact-publishing)
@@ -1284,6 +1286,217 @@ impl CompatibilityChecker {
   ]
 }
 ```
+
+---
+
+## 7.4 Schema Evolution Strategy
+
+### 7.4.1 Overview
+
+Themis uses a `Versioned<T>` wrapper pattern from `themis-platform-types` to support schema evolution. This enables:
+
+1. **Forward Compatibility** – New code can read data written by old code
+2. **Backward Compatibility** – Old code can read data written by new code (with graceful degradation)
+3. **Version Tracking** – Every serialized artifact knows its schema version
+
+### 7.4.2 Versioned<T> Pattern
+
+```rust
+use themis_platform_types::schema::Versioned;
+
+/// Wrapper that embeds schema version metadata
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Versioned<T> {
+    /// Schema version (e.g., "1.0.0")
+    pub version: String,
+    /// The actual payload
+    pub data: T,
+}
+
+impl<T> Versioned<T> {
+    /// Create a new versioned wrapper at the current schema version
+    pub fn new(data: T) -> Self {
+        Self {
+            version: CURRENT_SCHEMA_VERSION.to_string(),
+            data,
+        }
+    }
+
+    /// Check if this data can be read by the current code
+    pub fn is_compatible(&self) -> bool {
+        // Major version must match for compatibility
+        let current_major = parse_major(CURRENT_SCHEMA_VERSION);
+        let data_major = parse_major(&self.version);
+        current_major == data_major
+    }
+}
+```
+
+### 7.4.3 Usage Patterns
+
+**Writing Artifacts:**
+
+```rust
+use themis_artifact::Artifact;
+use themis_platform_types::schema::Versioned;
+
+// Always wrap artifacts with version info before persisting
+let artifact = Artifact::builder()
+    .service("users-service")
+    .version("1.2.0")
+    .build()?;
+
+let versioned = Versioned::new(artifact);
+let json = serde_json::to_string(&versioned)?;
+// {"version":"1.0.0","data":{...artifact fields...}}
+```
+
+**Reading Artifacts:**
+
+```rust
+// When reading, check version compatibility first
+let versioned: Versioned<Artifact> = serde_json::from_str(&json)?;
+
+if !versioned.is_compatible() {
+    return Err(Error::IncompatibleSchemaVersion {
+        expected: CURRENT_SCHEMA_VERSION,
+        found: versioned.version,
+    });
+}
+
+let artifact = versioned.data;
+```
+
+### 7.4.4 Migration Strategy
+
+When breaking changes are required:
+
+1. **Bump Major Version** – Update `CURRENT_SCHEMA_VERSION` from "1.x.x" to "2.0.0"
+2. **Define Migration Function** – Map old schema to new schema
+3. **Support Reading Both** – During transition period, attempt migration
+
+```rust
+/// Migration function from v1 to v2
+fn migrate_v1_to_v2(v1: ArtifactV1) -> Result<ArtifactV2, MigrationError> {
+    Ok(ArtifactV2 {
+        // Map old fields to new structure
+        service: v1.service,
+        version: v1.version,
+        // New required field - use sensible default
+        owner: v1.metadata.get("owner").cloned()
+            .unwrap_or_else(|| "unknown".to_string()),
+    })
+}
+
+/// Read artifact with automatic migration
+fn read_artifact(json: &str) -> Result<Artifact, Error> {
+    // First try current version
+    if let Ok(v) = serde_json::from_str::<Versioned<Artifact>>(json) {
+        if v.is_compatible() {
+            return Ok(v.data);
+        }
+    }
+
+    // Fall back to v1 with migration
+    let v1: Versioned<ArtifactV1> = serde_json::from_str(json)?;
+    if v1.version.starts_with("1.") {
+        return Ok(migrate_v1_to_v2(v1.data)?);
+    }
+
+    Err(Error::UnsupportedSchemaVersion(v1.version))
+}
+```
+
+### 7.4.5 Best Practices
+
+| Practice | Rationale |
+|----------|-----------|
+| **Use optional fields for additions** | Adding optional fields is always backward compatible |
+| **Never remove required fields** | Breaking change - requires major version bump |
+| **Provide migration path** | When bumping major version, publish migration guide |
+| **Test with old data** | Integration tests should read fixtures from previous versions |
+| **Version your fixtures** | Test fixtures should be tagged with schema version |
+
+### 7.4.6 Schema Version Constants
+
+```rust
+// themis-platform-types/src/schema.rs
+pub const CURRENT_SCHEMA_VERSION: &str = "1.0.0";
+
+// themis-artifact/src/artifact.rs
+pub const ARTIFACT_SCHEMA_VERSION: &str =
+    "https://themis.somniatore.com/schemas/artifact.v1.json";
+```
+
+---
+
+## 7.5 Registry Topology
+
+### 7.5.1 Architecture Decision
+
+Themis and Eunomia use **separate registries** for their respective artifacts:
+
+| Component | Registry Purpose | Artifact Type |
+|-----------|-----------------|---------------|
+| **Themis** | Contract artifacts | OpenAPI, Protobuf, GraphQL, AsyncAPI definitions |
+| **Eunomia** | Policy artifacts | Rego policies, policy bundles |
+
+### 7.5.2 Rationale
+
+1. **Separation of Concerns** – Contracts and policies have different lifecycles
+2. **Access Control** – Different teams may manage contracts vs policies
+3. **Deployment Independence** – One registry can be updated without affecting the other
+4. **Schema Independence** – Artifact formats can evolve independently
+
+### 7.5.3 Registry Interaction
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      OCI Registry (GHCR/Harbor)                 │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌─────────────────────────┐    ┌─────────────────────────┐     │
+│  │   Themis Namespace      │    │   Eunomia Namespace     │     │
+│  │   /themis-contracts/    │    │   /eunomia-policies/    │     │
+│  ├─────────────────────────┤    ├─────────────────────────┤     │
+│  │ users-service:1.0.0     │    │ auth-policy:1.0.0       │     │
+│  │ orders-service:2.1.0    │    │ rate-limit:2.0.0        │     │
+│  │ payments-service:1.5.0  │    │ compliance:3.1.0        │     │
+│  └─────────────────────────┘    └─────────────────────────┘     │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+                 │                           │
+                 ▼                           ▼
+          ┌──────────┐                ┌──────────┐
+          │ Themis   │                │ Eunomia  │
+          │ CLI      │                │ CLI      │
+          └──────────┘                └──────────┘
+```
+
+### 7.5.4 Cross-Registry References
+
+When Archimedes needs both contracts and policies:
+
+```yaml
+# archimedes.toml - Service configuration
+[contracts]
+registry = "ghcr.io/myorg/themis-contracts"
+service = "users-service"
+version = "1.2.0"
+
+[policies]
+registry = "ghcr.io/myorg/eunomia-policies"
+bundle = "service-policies"
+version = "1.0.0"
+```
+
+### 7.5.5 Shared Infrastructure
+
+While registries are logically separate, they can share:
+
+- **OCI Backend** – Same Harbor/GHCR instance with different namespaces
+- **Authentication** – Same OIDC provider / service accounts
+- **CI Pipeline** – Same GitHub Actions workflow can publish to both
 
 ---
 

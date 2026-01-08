@@ -114,12 +114,12 @@ match error_code {
 | [ADR-005](../../docs/decisions/005-kubernetes-ingress-over-custom-router.md) | No custom router, use K8s Ingress                   |
 | [ADR-007](../../docs/decisions/007-apache-2-license.md)                      | Apache 2.0 license                                  |
 
-**MVP Contract Support:**
+**MVP Contract Support:** → ✅ ALL COMPLETE
 
 - ✅ OpenAPI 3.0 / 3.1 (REST APIs)
-- ❌ Protobuf/gRPC (post-MVP)
-- ❌ GraphQL (post-MVP)
-- ❌ AsyncAPI (post-MVP)
+- ✅ Protobuf/gRPC (Phase T6)
+- ✅ GraphQL (Phase T7)
+- ✅ AsyncAPI (Phase T8)
 
 **Contract Registry:** OCI-compatible registry (see [Infrastructure Decisions](../../docs/architecture/infrastructure-decisions.md))
 
@@ -128,45 +128,44 @@ match error_code {
 ## 🔧 Architecture Review Tech Debt (2026-01-07)
 
 > **Source**: Senior Architect Review
-> **Status**: Tracked for future work
+> **Status**: ✅ RESOLVED
 
-### P0 - Build Blockers (Must Fix)
+### P0 - Build Blockers → ✅ ALL FIXED
 
-| Item | Description | Status |
-|------|-------------|--------|
-| **themis-graphql incomplete** | Missing `parser.rs` and `normalizer.rs` modules. Crate declared in workspace but doesn't compile. Either complete implementation or remove from workspace members. | 🔴 Blocking |
-| **themis-graphql API errors** | `GraphqlError` missing `From<schema::ParseError>`, `ContractFormat::GraphQL` should be `GraphQl`, `Schema::OneOf` expects `OneOfSchema` not `Vec<Schema>` | 🔴 Blocking |
-| **Missing workspace dep** | `tempfile` added to workspace.dependencies ✅ Fixed | ✅ Fixed |
+| Item                              | Description                                            | Status   |
+| --------------------------------- | ------------------------------------------------------ | -------- |
+| ~~**themis-graphql incomplete**~~ | Full implementation with parser, normalizer, validator | ✅ Fixed |
+| ~~**themis-graphql API errors**~~ | All API issues resolved                                | ✅ Fixed |
+| ~~**Missing workspace dep**~~     | `tempfile` added to workspace.dependencies             | ✅ Fixed |
 
 ---
 
 ## 🚨 Multi-Language Requirement (2026-01-08)
 
-> **Source**: [Staff Engineer Multi-Language Review](../../docs/reviews/2026-01-08-multi-language-requirement-review.md)
-> **Impact**: Themis code generation must support Python, Go, TypeScript, C++ for Archimedes sidecar pattern
+> **Source**: [Staff Engineer Multi-Language Review](../../docs/reviews/2026-01-08-multi-language-requirement-review.md) > **Impact**: Themis code generation must support Python, Go, TypeScript, C++ for Archimedes sidecar pattern
 > **Related**: [ADR-009](../../docs/decisions/009-archimedes-sidecar-multi-language.md)
 
 ### Cross-Component Coordination
 
 Themis code generation is a **dependency for Archimedes A11 (Type Generation)**:
 
-| Archimedes Phase | Themis Requirement | Status |
-|------------------|-------------------|--------|
-| A11 (Weeks 40-42) | Python dataclass generation | ✅ themis-codegen/python exists |
+| Archimedes Phase  | Themis Requirement              | Status                              |
+| ----------------- | ------------------------------- | ----------------------------------- |
+| A11 (Weeks 40-42) | Python dataclass generation     | ✅ themis-codegen/python exists     |
 | A11 (Weeks 40-42) | TypeScript interface generation | ✅ themis-codegen/typescript exists |
-| A11 (Weeks 40-42) | Go struct generation | ✅ themis-codegen/go implemented |
-| A11 (Weeks 40-42) | C++ struct generation | ✅ themis-codegen/cpp implemented |
+| A11 (Weeks 40-42) | Go struct generation            | ✅ themis-codegen/go implemented    |
+| A11 (Weeks 40-42) | C++ struct generation           | ✅ themis-codegen/cpp implemented   |
 
 ### Required Themis Work (Before Week 40) ✅ COMPLETE
 
-| Task | Effort | Priority | Status |
-|------|--------|----------|--------|
-| Add `themis codegen --language go` | 8 hrs | High | ✅ Complete |
-| Add `themis codegen --language cpp` | 8 hrs | High | ✅ Complete |
-| Add JSON Schema output mode | 4 hrs | Medium | ⏳ Backlog |
-| Validate existing Python/TS generators work with sidecar | 2 hrs | High | ✅ Complete |
+| Task                                                     | Effort | Priority | Status      |
+| -------------------------------------------------------- | ------ | -------- | ----------- |
+| Add `themis codegen --language go`                       | 8 hrs  | High     | ✅ Complete |
+| Add `themis codegen --language cpp`                      | 8 hrs  | High     | ✅ Complete |
+| Add JSON Schema output mode                              | 4 hrs  | Medium   | ✅ Complete |
+| Validate existing Python/TS generators work with sidecar | 2 hrs  | High     | ✅ Complete |
 
-### JSON Schema Strategy
+### JSON Schema Strategy ✅ IMPLEMENTED
 
 For multi-language support, Themis should also output JSON Schema from contracts:
 
@@ -179,18 +178,19 @@ quicktype --src schemas/User.json --lang go --out user.go
 ```
 
 This enables:
+
 - Generic language support via `quicktype`, `datamodel-code-generator`, etc.
 - Schema validation in any language
 - Interoperability with non-Themis tools
 
 ---
 
-### P1 - Themis-Specific Items
+### P1 - Themis-Specific Items → ✅ COMPLETE
 
-| Item | Description | Status |
-|------|-------------|--------|
-| **Schema Evolution Strategy** | `Versioned<T>` exists but no migration functions or backward compat reading | ⏳ Backlog |
-| **Registry Topology** | Document whether Themis registry and Eunomia registry are same or separate | ⏳ Backlog |
+| Item                          | Description                                                                 | Status     |
+| ----------------------------- | --------------------------------------------------------------------------- | ---------- |
+| ~~**Schema Evolution Strategy**~~ | `Versioned<T>` documented with migration patterns in design.md Section 7.4 | ✅ Complete |
+| ~~**Registry Topology**~~         | Documented in design.md Section 7.5 - separate Themis/Eunomia registries   | ✅ Complete |
 
 ---
 
@@ -201,42 +201,42 @@ This enables:
 
 ### ✅ Fully Implemented
 
-| Feature | Status | Evidence |
-|---------|--------|----------|
-| **OpenAPI 3.1 Parser** | ✅ | themis-openapi/src/parser.rs |
-| **Protobuf v3 Parser** | ✅ | themis-protobuf/src/parser.rs (21 tests) |
-| **GraphQL SDL Parser** | ✅ | themis-graphql/src/parser.rs (21 tests) |
-| **AsyncAPI 3.0 Parser** | ✅ | themis-asyncapi/src/parser.rs (21 tests) |
-| **Rust Code Generation** | ✅ | themis-codegen/src/rust/ |
-| **TypeScript Code Generation** | ✅ | themis-codegen/src/typescript/ |
-| **Python Code Generation** | ✅ | themis-codegen/src/python/ |
-| **C++ Code Generation** | ✅ | themis-codegen/src/cpp/ (13 tests) |
-| **Go Code Generation** | ✅ | themis-codegen/src/go/ (19 tests) |
-| **Contract Validation** | ✅ | THEMIS001-009 rules |
-| **Linting Rules (14)** | ✅ | naming, documentation, security, versioning |
-| **Breaking Change Detection** | ✅ | BREAK001-010, ADD001-006, MOD001-004 |
-| **OCI Registry Client** | ✅ | themis-registry/ |
-| **All 7 CLI Commands** | ✅ | validate, lint, diff, codegen, pack, publish, fetch |
-| **Multi-Format CLI Support** | ✅ | OpenAPI, Protobuf, GraphQL, AsyncAPI |
-| **Multi-Language CLI Support** | ✅ | Rust, TypeScript, Python, C++, Go |
+| Feature                        | Status | Evidence                                            |
+| ------------------------------ | ------ | --------------------------------------------------- |
+| **OpenAPI 3.1 Parser**         | ✅     | themis-openapi/src/parser.rs                        |
+| **Protobuf v3 Parser**         | ✅     | themis-protobuf/src/parser.rs (21 tests)            |
+| **GraphQL SDL Parser**         | ✅     | themis-graphql/src/parser.rs (21 tests)             |
+| **AsyncAPI 3.0 Parser**        | ✅     | themis-asyncapi/src/parser.rs (21 tests)            |
+| **Rust Code Generation**       | ✅     | themis-codegen/src/rust/                            |
+| **TypeScript Code Generation** | ✅     | themis-codegen/src/typescript/                      |
+| **Python Code Generation**     | ✅     | themis-codegen/src/python/                          |
+| **C++ Code Generation**        | ✅     | themis-codegen/src/cpp/ (13 tests)                  |
+| **Go Code Generation**         | ✅     | themis-codegen/src/go/ (19 tests)                   |
+| **Contract Validation**        | ✅     | THEMIS001-009 rules                                 |
+| **Linting Rules (14)**         | ✅     | naming, documentation, security, versioning         |
+| **Breaking Change Detection**  | ✅     | BREAK001-010, ADD001-006, MOD001-004                |
+| **OCI Registry Client**        | ✅     | themis-registry/                                    |
+| **All 7 CLI Commands**         | ✅     | validate, lint, diff, codegen, pack, publish, fetch |
+| **Multi-Format CLI Support**   | ✅     | OpenAPI, Protobuf, GraphQL, AsyncAPI                |
+| **Multi-Language CLI Support** | ✅     | Rust, TypeScript, Python, C++, Go                   |
 
 ### ⚠️ Partially Implemented
 
-| Feature | Gap | Impact |
-|---------|-----|--------|
-| ~~**GraphQL Parser**~~ | ~~Missing `@themis` directive parsing~~ | ✅ Fixed in Phase T12 |
-| **GraphQL Validator** | Missing GraphQL-specific lint rules | Low |
-| ~~**Protobuf Parser**~~ | ~~Missing `(themis.operation_id)` extension parsing~~ | ✅ Fixed in Phase T12 |
+| Feature                   | Gap                                                   | Impact                |
+| ------------------------- | ----------------------------------------------------- | --------------------- |
+| ~~**GraphQL Parser**~~    | ~~Missing `@themis` directive parsing~~               | ✅ Fixed in Phase T12 |
+| ~~**GraphQL Validator**~~ | ~~Missing GraphQL-specific lint rules~~               | ✅ Fixed in Phase T10 |
+| ~~**Protobuf Parser**~~   | ~~Missing `(themis.operation_id)` extension parsing~~ | ✅ Fixed in Phase T12 |
 
-### ❌ Not Implemented (Backlog)
+### ❌ Not Implemented (Backlog) → ✅ NOW COMPLETE
 
-| Feature | Priority | Notes |
-|---------|----------|-------|
-| **themis-action** (GitHub Action) | P2 | action.yml, Dockerfile not created |
-| **Protobuf-specific lint rules** | P2 | proto/package-name, proto/service-name |
-| **GraphQL-specific lint rules** | P2 | graphql/operation-directive, graphql/input-naming |
+| Feature                               | Priority | Status             |
+| ------------------------------------- | -------- | ------------------ |
+| ~~**themis-action** (GitHub Action)~~ | P2       | ✅ Complete in T10 |
+| ~~**Protobuf-specific lint rules**~~  | P2       | ✅ Complete in T10 |
+| ~~**GraphQL-specific lint rules**~~   | P2       | ✅ Complete in T10 |
 
-### 🔴 Critical: Spec vs Roadmap Mismatch
+### 🔴 Critical: Spec vs Roadmap Mismatch → ✅ RESOLVED
 
 | Issue | Details |
 |-------|---------||
@@ -245,11 +245,11 @@ This enables:
 
 ### P2 - Cross-Component Items
 
-| Item | Description | Owner |
-|------|-------------|-------|
+| Item                               | Description                                                           | Owner      |
+| ---------------------------------- | --------------------------------------------------------------------- | ---------- |
 | **Handler Macro + Real Contracts** | Test `archimedes-macros` with actual Themis artifacts, not just mocks | Archimedes |
-| **Health Check Standardization** | Define standard health check pattern for K8s deployment | Platform |
-| **MSRV Alignment** | All components now use MSRV 1.75 ✅ | All |
+| **Health Check Standardization**   | Define standard health check pattern for K8s deployment               | Platform   |
+| **MSRV Alignment**                 | All components now use MSRV 1.75 ✅                                   | All        |
 
 ---
 
@@ -921,7 +921,7 @@ Themis MUST produce artifacts that:
 - [x] Generate net/http handler interfaces
   > **Completed**: Handler interface with method per operation, RequestContext
 - [x] Handle nullable fields (pointers)
-  > **Completed**: Optional fields use *T pointer types
+  > **Completed**: Optional fields use \*T pointer types
 - [x] Add unit tests (target: 15+ tests)
   > **Completed**: 19 tests covering types, structs, enums, handlers
 
@@ -960,14 +960,16 @@ Themis MUST produce artifacts that:
   > Extended Language enum with JsonSchema variant
 - [x] Implement Protobuf-specific lint rules
   > Created `themis-lint/src/rules/protobuf.rs` with:
+  >
   > - `protobuf-package-name`: Validates package naming conventions (lowercase, dot-separated)
   > - `protobuf-service-name`: Validates service names are PascalCase
-  > 10 tests covering valid/invalid package names and service naming
+  >   10 tests covering valid/invalid package names and service naming
 - [x] Implement GraphQL-specific lint rules
   > Created `themis-lint/src/rules/graphql.rs` with:
+  >
   > - `graphql-operation-directive`: Validates operations have required directives
   > - `graphql-input-naming`: Validates Input type naming conventions (suffix with "Input")
-  > 7 tests covering directive presence and input type naming
+  >   7 tests covering directive presence and input type naming
 - [x] Add comprehensive tests (achieved: 35+ new tests)
   > 10 JSON Schema generator tests, 10 Protobuf rule tests, 7 GraphQL rule tests
 
@@ -975,12 +977,14 @@ Themis MUST produce artifacts that:
 
 - [x] Create `themis-action/` GitHub Action
   > Full action at `.github/actions/themis-action/`:
+  >
   > - `action.yml`: Defines inputs (command, contract, format, language, etc.) and outputs
   > - `Dockerfile`: Multi-stage build from Rust slim for efficient image size
   > - `entrypoint.sh`: Bash script handling all Themis commands
   > - `README.md`: Comprehensive documentation with examples
 - [x] Add GitHub Action workflow examples
   > Created `.github/workflows/contract-governance-example.yml` demonstrating:
+  >
   > - Contract validation on PRs
   > - Lint with configurable rules
   > - Breaking change detection
@@ -993,7 +997,8 @@ Themis MUST produce artifacts that:
 ### Phase T10 Milestone ✅ ACHIEVED
 
 **Criteria**: JSON Schema output, format-specific rules, and GitHub Action for CI/CD
-**Result**: 
+**Result**:
+
 - 578 tests passing (35+ new in this phase)
 - 18 total lint rules (including 2 Protobuf, 2 GraphQL)
 - Full GitHub Action with Docker-based runtime
@@ -1008,14 +1013,14 @@ Themis MUST produce artifacts that:
 
 ### Week 27: Backlog Cleanup
 
-| Task | Priority | Status |
-|------|----------|--------|
-| AsyncAPI lint rules (3 rules) | P2 | ✅ Complete |
-| npm package output (TypeScript) | P2 | ✅ Complete |
-| PyPI package output (Python) | P2 | ✅ Complete |
-| Normalizer implementations | P2 | ✅ Complete |
-| External `$ref` resolution | P2 | ✅ Complete |
-| Update outdated dependencies | P2 | ✅ Complete |
+| Task                            | Priority | Status      |
+| ------------------------------- | -------- | ----------- |
+| AsyncAPI lint rules (3 rules)   | P2       | ✅ Complete |
+| npm package output (TypeScript) | P2       | ✅ Complete |
+| PyPI package output (Python)    | P2       | ✅ Complete |
+| Normalizer implementations      | P2       | ✅ Complete |
+| External `$ref` resolution      | P2       | ✅ Complete |
+| Update outdated dependencies    | P2       | ✅ Complete |
 
 ### Completed in T11
 
@@ -1048,18 +1053,19 @@ Themis MUST produce artifacts that:
 
 ### Week 28: Directive & Extension Parsing
 
-| Task | Priority | Status |
-|------|----------|--------|
-| GraphQL `@themis` directive parsing | P1 | ✅ Complete |
-| GraphQL `@operation` directive parsing | P1 | ✅ Complete |
-| Protobuf `(themis.service)` extension | P1 | ✅ Complete |
-| Protobuf `(themis.operation)` extension | P1 | ✅ Complete |
-| Tests for directive/extension parsing | P1 | ✅ Complete |
-| Documentation updates | P1 | ✅ Complete |
+| Task                                    | Priority | Status      |
+| --------------------------------------- | -------- | ----------- |
+| GraphQL `@themis` directive parsing     | P1       | ✅ Complete |
+| GraphQL `@operation` directive parsing  | P1       | ✅ Complete |
+| Protobuf `(themis.service)` extension   | P1       | ✅ Complete |
+| Protobuf `(themis.operation)` extension | P1       | ✅ Complete |
+| Tests for directive/extension parsing   | P1       | ✅ Complete |
+| Documentation updates                   | P1       | ✅ Complete |
 
 ### Deliverables
 
 1. **GraphQL Directive Parsing** (`themis-graphql/src/parser.rs`)
+
    - `@themis(service, owner)` directive on SCHEMA
    - `@operation(operationId, rateLimitTier, timeoutTier, idempotent, security)` on FIELD_DEFINITION
    - 7 new tests for directive parsing
@@ -1078,14 +1084,56 @@ Themis MUST produce artifacts that:
 
 ---
 
+## Phase T13: Schema Evolution & Documentation (Week 29) ✅ COMPLETE
+
+> **Purpose**: Complete P1 backlog items for schema evolution support and documentation clarity.
+> **Started**: 2026-01-08
+> **Completed**: 2026-01-08
+
+### Week 29: Schema Evolution Strategy
+
+| Task                                    | Priority | Status      |
+| --------------------------------------- | -------- | ----------- |
+| Document `Versioned<T>` usage patterns  | P1       | ✅ Complete |
+| Add migration function examples         | P1       | ✅ Complete |
+| Document backward compatibility reading | P1       | ✅ Complete |
+| Registry topology documentation         | P1       | ✅ Complete |
+| Update roadmap with accurate status     | P1       | ✅ Complete |
+
+### Deliverables
+
+1. **Schema Evolution Documentation** (`docs/design.md` Section 7.4)
+
+   - Usage patterns for `Versioned<T>` wrapper
+   - Migration strategy examples with code samples
+   - Backward compatibility guidelines and best practices
+
+2. **Registry Topology** (`docs/design.md` Section 7.5)
+
+   - Documented Themis registry vs Eunomia registry relationship
+   - Architecture diagram showing separate namespaces
+   - Cross-registry reference examples (archimedes.toml)
+
+3. **Roadmap Cleanup**
+   - Updated outdated status markers (P0 blockers, format support)
+   - Updated test count (669 tests)
+   - Marked all P1 items as complete
+
+### Phase T13 Milestone
+
+**Criteria**: Schema evolution strategy documented, registry topology clarified
+**Result**: ✅ All criteria met - documentation added to design.md
+
+---
+
 ## Remaining Backlog (P3)
 
 > Lower priority items for future consideration.
 
-| Item                       | Location           | Priority | Status     |
-| -------------------------- | ------------------ | -------- | ---------- |
-| Rust SDK for CLI           | New crate          | P3       | ⏳ Backlog |
-| Terraform provider         | Integration        | P3       | ⏳ Backlog |
+| Item               | Location    | Priority | Status     |
+| ------------------ | ----------- | -------- | ---------- |
+| Rust SDK for CLI   | New crate   | P3       | ⏳ Backlog |
+| Terraform provider | Integration | P3       | ⏳ Backlog |
 
 ---
 
@@ -1093,14 +1141,14 @@ Themis MUST produce artifacts that:
 
 Phase T10 has been completed with the following deliverables:
 
-| Item | Status | Details |
-|------|--------|---------|
-| JSON Schema Generator | ✅ | `themis-codegen/src/jsonschema/` with 10 tests |
-| Protobuf Lint Rules | ✅ | 2 rules: package-name, service-name (10 tests) |
-| GraphQL Lint Rules | ✅ | 2 rules: operation-directive, input-naming (7 tests) |
-| GitHub Action | ✅ | `.github/actions/themis-action/` with Docker runtime |
-| Example Workflows | ✅ | `.github/workflows/contract-governance-example.yml` |
-| Documentation | ✅ | Full README with usage examples |
+| Item                  | Status | Details                                              |
+| --------------------- | ------ | ---------------------------------------------------- |
+| JSON Schema Generator | ✅     | `themis-codegen/src/jsonschema/` with 10 tests       |
+| Protobuf Lint Rules   | ✅     | 2 rules: package-name, service-name (10 tests)       |
+| GraphQL Lint Rules    | ✅     | 2 rules: operation-directive, input-naming (7 tests) |
+| GitHub Action         | ✅     | `.github/actions/themis-action/` with Docker runtime |
+| Example Workflows     | ✅     | `.github/workflows/contract-governance-example.yml`  |
+| Documentation         | ✅     | Full README with usage examples                      |
 
 **Total Test Count**: 578 tests passing
 
@@ -1133,8 +1181,10 @@ Phase T10 has been completed with the following deliverables:
 | T9: Languages     | Week 24 | C++ and Go code generation              | ✅     |
 | T10: Linting+JSON | Week 26 | JSON Schema output + format rules + GA  | ✅     |
 | T11: Polish       | Week 27 | Normalizers, $ref, deps updated         | ✅     |
+| T12: Metadata     | Week 28 | GraphQL/Protobuf metadata extraction    | ✅     |
+| T13: Evolution    | Week 29 | Schema evolution + registry topology    | ✅     |
 
-**Total Tests**: 633 tests passing across all crates
+**Total Tests**: 669 tests passing across all crates
 
 ---
 
