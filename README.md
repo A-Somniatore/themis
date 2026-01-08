@@ -146,19 +146,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Validate OpenAPI Contract
         uses: A-Somniatore/themis/.github/actions/themis-action@main
         with:
           command: validate
-          contract: './api/openapi.yaml'
-      
+          contract: "./api/openapi.yaml"
+
       - name: Check for Breaking Changes
         uses: A-Somniatore/themis/.github/actions/themis-action@main
         with:
           command: compat
-          old-contract: './api/v1/openapi.yaml'
-          new-contract: './api/v2/openapi.yaml'
+          old-contract: "./api/v1/openapi.yaml"
+          new-contract: "./api/v2/openapi.yaml"
 ```
 
 See [.github/actions/themis-action/README.md](.github/actions/themis-action/README.md) for full documentation.

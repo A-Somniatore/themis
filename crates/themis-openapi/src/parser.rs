@@ -242,15 +242,14 @@ pub fn parse_openapi_file(path: &Path) -> ThemisResult<Contract> {
 /// ```
 pub fn parse_openapi_bundled(path: &Path) -> ThemisResult<Contract> {
     use crate::bundler::{BundleOptions, OpenApiBundler};
-    
+
     let mut ref_bundler = OpenApiBundler::new(BundleOptions::default());
     let bundled_doc = ref_bundler.bundle_file(path)?;
-    
+
     // Convert bundled JSON value back to string for parsing
-    let content = serde_json::to_string(&bundled_doc).map_err(|e| ThemisError::Internal(
-        format!("Failed to serialize bundled document: {e}")
-    ))?;
-    
+    let content = serde_json::to_string(&bundled_doc)
+        .map_err(|e| ThemisError::Internal(format!("Failed to serialize bundled document: {e}")))?;
+
     parse_openapi(&content)
 }
 

@@ -379,10 +379,7 @@ paths:
 
         // Check paths are sorted alphabetically
         let paths = normalized.get("paths").unwrap().as_mapping().unwrap();
-        let keys: Vec<_> = paths
-            .keys()
-            .filter_map(|k| k.as_str())
-            .collect();
+        let keys: Vec<_> = paths.keys().filter_map(|k| k.as_str()).collect();
         assert_eq!(keys, vec!["/accounts", "/orders", "/users"]);
     }
 
@@ -413,10 +410,7 @@ components:
             .unwrap()
             .as_mapping()
             .unwrap();
-        let keys: Vec<_> = schemas
-            .keys()
-            .filter_map(|k| k.as_str())
-            .collect();
+        let keys: Vec<_> = schemas.keys().filter_map(|k| k.as_str()).collect();
         assert_eq!(keys, vec!["Address", "Order", "User"]);
     }
 
