@@ -48,6 +48,7 @@ pub mod parser;
 pub mod validator;
 
 pub use error::{ProtobufError, Result};
+pub use normalizer::{NormalizerOptions, ProtobufNormalizer};
 pub use parser::{parse_proto, parse_proto_file, ProtoParser};
 pub use validator::ProtoValidator;
 

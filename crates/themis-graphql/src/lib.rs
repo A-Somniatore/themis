@@ -39,7 +39,7 @@ pub mod parser;
 pub mod validator;
 
 pub use error::{GraphqlError, Result};
-pub use normalizer::NormalizerOptions;
+pub use normalizer::{GraphQLNormalizer, NormalizerOptions};
 pub use parser::{parse_graphql, parse_graphql_file, GraphqlParser};
 pub use validator::{GraphqlValidator, ValidationResult};
 
