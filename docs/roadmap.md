@@ -1040,6 +1040,41 @@ Themis MUST produce artifacts that:
 
 ---
 
+## Phase T12: Contract Metadata Enhancements (Week 28) 🔄 IN PROGRESS
+
+> **Purpose**: Complete the partially implemented contract format features for full metadata extraction.
+> **Started**: 2026-01-07
+
+### Week 28: Directive & Extension Parsing
+
+| Task | Priority | Status |
+|------|----------|--------|
+| GraphQL `@themis` directive parsing | P1 | ⏳ In Progress |
+| GraphQL `@operation` directive parsing | P1 | ⏳ In Progress |
+| Protobuf `(themis.operation_id)` extension | P1 | ⏳ In Progress |
+| Protobuf `(themis.service)` extension | P1 | ⏳ In Progress |
+| Tests for directive/extension parsing | P1 | ⏳ In Progress |
+| Documentation updates | P1 | ⏳ In Progress |
+
+### Goals
+
+1. **GraphQL**: Extract authorization metadata from `@themis` and `@operation` directives
+   - Service name and owner from `@themis(service: "...", owner: "...")`
+   - Operation metadata from `@operation(operationId: "...", rateLimit: ..., timeout: ..., security: [...])`
+   - Deprecation info from `@deprecated(reason: "...", sunset: "...")`
+
+2. **Protobuf**: Extract Themis metadata from custom options
+   - Service metadata from `(themis.service)` option
+   - Operation ID from `(themis.operation_id)` option
+   - Field validation from `(themis.field)` option
+
+### Phase T12 Milestone
+
+**Criteria**: Full metadata extraction from GraphQL and Protobuf contracts
+**Target**: 650+ tests passing
+
+---
+
 ## Remaining Backlog (P3)
 
 > Lower priority items for future consideration.

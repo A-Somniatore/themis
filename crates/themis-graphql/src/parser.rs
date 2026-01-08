@@ -2,16 +2,28 @@
 //!
 //! This module provides the core parsing logic for converting GraphQL SDL
 //! definitions into Themis [`Contract`] objects.
+//!
+//! ## Directive Support
+//!
+//! The parser extracts Themis-specific metadata from GraphQL directives:
+//!
+//! - `@themis(service: String!, owner: String!)` on SCHEMA
+//! - `@operation(operationId: String!, rateLimitTier: RateLimitTier, ...)` on FIELD_DEFINITION
+//! - `@deprecated(reason: String!, sunset: String)` on FIELD_DEFINITION
 
 use std::collections::HashMap;
 use std::path::Path;
 
 use graphql_parser::schema::{
-    Definition, Document, Field, InputValue, ObjectType, Type, TypeDefinition,
+    Definition, Directive, Document, Field, InputValue, ObjectType, SchemaDefinition, Type,
+    TypeDefinition, Value,
 };
 use indexmap::IndexMap;
 use themis_core::contract::{Contract, ContractFormat, ContractMetadata};
-use themis_core::operation::{Operation, Parameter, ParameterLocation, RequestBody, Response, MediaType};
+use themis_core::operation::{
+    MediaType, Operation, Parameter, ParameterLocation, RequestBody, Response,
+    SecurityRequirement, ThemisOperationMetadata,
+};
 use themis_core::schema::{
     ArraySchema, BooleanSchema, EnumSchema, EnumValue, IntegerSchema, NumberSchema, ObjectSchema,
     OneOfSchema, RefSchema, Schema, StringSchema,
@@ -23,11 +35,36 @@ use crate::error::{GraphqlError, Result};
 /// GraphQL parser for Themis contracts.
 ///
 /// Parses GraphQL SDL definitions and normalizes them into the unified
-/// Themis [`Contract`] model.
+/// Themis [`Contract`] model. Extracts Themis-specific metadata from
+/// `@themis` and `@operation` directives.
 #[derive(Debug, Default)]
 pub struct GraphqlParser {
     /// Include paths for resolving imports.
     _include_paths: Vec<String>,
+}
+
+/// Metadata extracted from the `@themis` schema directive.
+#[derive(Debug, Clone, Default)]
+pub struct ThemisSchemaDirective {
+    /// Service name from `@themis(service: "...")`
+    pub service: Option<String>,
+    /// Owner from `@themis(owner: "...")`
+    pub owner: Option<String>,
+}
+
+/// Metadata extracted from the `@operation` field directive.
+#[derive(Debug, Clone, Default)]
+pub struct ThemisOperationDirective {
+    /// Operation ID from `@operation(operationId: "...")`
+    pub operation_id: Option<String>,
+    /// Rate limit tier from `@operation(rateLimitTier: ...)`
+    pub rate_limit_tier: Option<String>,
+    /// Timeout tier from `@operation(timeoutTier: ...)`
+    pub timeout_tier: Option<String>,
+    /// Whether the operation is idempotent
+    pub idempotent: Option<bool>,
+    /// Security schemes from `@operation(security: [...])`
+    pub security: Vec<String>,
 }
 
 impl GraphqlParser {
@@ -79,6 +116,15 @@ impl GraphqlParser {
         let mut operations = HashMap::new();
         let mut schemas = IndexMap::new();
 
+        // Extract @themis directive from schema definition if present
+        let mut themis_directive = ThemisSchemaDirective::default();
+        for definition in &document.definitions {
+            if let Definition::SchemaDefinition(schema_def) = definition {
+                themis_directive = Self::extract_themis_directive(schema_def);
+                break;
+            }
+        }
+
         // Process all definitions
         for definition in &document.definitions {
             match definition {
@@ -88,7 +134,8 @@ impl GraphqlParser {
                 Definition::SchemaDefinition(_)
                 | Definition::TypeExtension(_)
                 | Definition::DirectiveDefinition(_) => {
-                    // These are handled implicitly or not yet supported
+                    // Schema definitions processed above
+                    // Type extensions and directive definitions handled implicitly
                 }
             }
         }
@@ -98,13 +145,16 @@ impl GraphqlParser {
             return Err(GraphqlError::NoQueryType);
         }
 
+        // Use @themis directive values or fall back to provided service_name
+        let final_service_name = themis_directive.service.unwrap_or_else(|| service_name.to_string());
+
         Ok(Contract {
             format: ContractFormat::GraphQl,
             version: Version::new(1, 0, 0),
             metadata: ContractMetadata {
-                service_name: service_name.to_string(),
+                service_name: final_service_name,
                 description: None,
-                owner: None,
+                owner: themis_directive.owner,
                 repository: None,
                 documentation_url: None,
             },
@@ -112,6 +162,113 @@ impl GraphqlParser {
             schemas,
             security_schemes: HashMap::new(),
         })
+    }
+
+    /// Extracts `@themis` directive from a schema definition.
+    ///
+    /// The directive format is:
+    /// ```graphql
+    /// schema @themis(service: "users-service", owner: "platform-team") {
+    ///   query: Query
+    /// }
+    /// ```
+    fn extract_themis_directive(schema_def: &SchemaDefinition<'_, String>) -> ThemisSchemaDirective {
+        let mut result = ThemisSchemaDirective::default();
+
+        for directive in &schema_def.directives {
+            if directive.name == "themis" {
+                result.service = Self::extract_string_arg(directive, "service");
+                result.owner = Self::extract_string_arg(directive, "owner");
+                break;
+            }
+        }
+
+        result
+    }
+
+    /// Extracts a string argument from a directive.
+    fn extract_string_arg(directive: &Directive<'_, String>, arg_name: &str) -> Option<String> {
+        for (name, value) in &directive.arguments {
+            if name == arg_name {
+                if let Value::String(s) = value {
+                    return Some(s.clone());
+                }
+            }
+        }
+        None
+    }
+
+    /// Extracts a boolean argument from a directive.
+    fn extract_bool_arg(directive: &Directive<'_, String>, arg_name: &str) -> Option<bool> {
+        for (name, value) in &directive.arguments {
+            if name == arg_name {
+                if let Value::Boolean(b) = value {
+                    return Some(*b);
+                }
+            }
+        }
+        None
+    }
+
+    /// Extracts an enum value argument from a directive.
+    fn extract_enum_arg(directive: &Directive<'_, String>, arg_name: &str) -> Option<String> {
+        for (name, value) in &directive.arguments {
+            if name == arg_name {
+                if let Value::Enum(e) = value {
+                    return Some(e.clone());
+                }
+            }
+        }
+        None
+    }
+
+    /// Extracts a list of enum values from a directive argument.
+    fn extract_enum_list_arg(directive: &Directive<'_, String>, arg_name: &str) -> Vec<String> {
+        for (name, value) in &directive.arguments {
+            if name == arg_name {
+                if let Value::List(items) = value {
+                    return items
+                        .iter()
+                        .filter_map(|v| {
+                            if let Value::Enum(e) = v {
+                                Some(e.clone())
+                            } else {
+                                None
+                            }
+                        })
+                        .collect();
+                }
+            }
+        }
+        Vec::new()
+    }
+
+    /// Extracts `@operation` directive from a field definition.
+    ///
+    /// The directive format is:
+    /// ```graphql
+    /// user(id: ID!): User @operation(
+    ///   operationId: "getUser"
+    ///   rateLimitTier: STANDARD
+    ///   timeoutTier: FAST
+    ///   security: [SPIFFE, BEARER]
+    /// )
+    /// ```
+    fn extract_operation_directive(field: &Field<'_, String>) -> ThemisOperationDirective {
+        let mut result = ThemisOperationDirective::default();
+
+        for directive in &field.directives {
+            if directive.name == "operation" {
+                result.operation_id = Self::extract_string_arg(directive, "operationId");
+                result.rate_limit_tier = Self::extract_enum_arg(directive, "rateLimitTier");
+                result.timeout_tier = Self::extract_enum_arg(directive, "timeoutTier");
+                result.idempotent = Self::extract_bool_arg(directive, "idempotent");
+                result.security = Self::extract_enum_list_arg(directive, "security");
+                break;
+            }
+        }
+
+        result
     }
 
     /// Processes a type definition.
@@ -176,7 +333,13 @@ impl GraphqlParser {
 
     /// Converts a GraphQL field to a Themis Operation.
     fn field_to_operation(field: &Field<'_, String>, operation_type: &str) -> Operation {
-        let operation_id = format!("{operation_type}_{}", field.name);
+        // Extract @operation directive if present
+        let op_directive = Self::extract_operation_directive(field);
+
+        // Use operationId from directive or generate from field name
+        let operation_id = op_directive
+            .operation_id
+            .unwrap_or_else(|| format!("{operation_type}_{}", field.name));
 
         // Convert arguments to parameters
         let parameters: Vec<Parameter> = field
@@ -239,6 +402,30 @@ impl GraphqlParser {
             .iter()
             .any(|d| d.name == "deprecated");
 
+        // Build ThemisOperationMetadata if directive provided meaningful data
+        let themis_metadata = if op_directive.rate_limit_tier.is_some()
+            || op_directive.timeout_tier.is_some()
+            || op_directive.idempotent.is_some()
+        {
+            Some(ThemisOperationMetadata {
+                rate_limit_tier: op_directive.rate_limit_tier,
+                timeout_tier: op_directive.timeout_tier,
+                idempotent: op_directive.idempotent,
+            })
+        } else {
+            None
+        };
+
+        // Convert security schemes from directive to security requirements
+        let security: Vec<SecurityRequirement> = op_directive
+            .security
+            .iter()
+            .map(|s| SecurityRequirement {
+                scheme: s.to_lowercase(),
+                scopes: Vec::new(),
+            })
+            .collect();
+
         Operation {
             operation_id,
             summary: Some(field.name.clone()),
@@ -248,10 +435,10 @@ impl GraphqlParser {
             parameters: if operation_type == "query" { parameters } else { Vec::new() },
             request_body,
             responses,
-            security: Vec::new(),
+            security,
             deprecated,
             tags: vec![operation_type.to_string()],
-            themis_metadata: None,
+            themis_metadata,
         }
     }
 
@@ -778,5 +965,239 @@ mod tests {
         } else {
             panic!("Expected OneOf schema");
         }
+    }
+
+    #[test]
+    fn test_themis_schema_directive() {
+        let schema = r#"
+            schema @themis(service: "users-service", owner: "platform-team") {
+                query: Query
+            }
+
+            type Query {
+                hello: String!
+            }
+        "#;
+
+        let result = parse_graphql(schema, "fallback-service");
+        assert!(result.is_ok(), "Parse failed: {:?}", result.err());
+
+        let contract = result.unwrap();
+        // Service name should come from directive, not fallback
+        assert_eq!(contract.metadata.service_name, "users-service");
+        assert_eq!(contract.metadata.owner, Some("platform-team".to_string()));
+    }
+
+    #[test]
+    fn test_themis_directive_fallback() {
+        let schema = r#"
+            type Query {
+                hello: String!
+            }
+        "#;
+
+        let result = parse_graphql(schema, "fallback-service");
+        assert!(result.is_ok());
+
+        let contract = result.unwrap();
+        // Should use fallback service name when no directive
+        assert_eq!(contract.metadata.service_name, "fallback-service");
+        assert_eq!(contract.metadata.owner, None);
+    }
+
+    #[test]
+    fn test_operation_directive_basic() {
+        let schema = r#"
+            schema @themis(service: "users-service", owner: "platform-team") {
+                query: Query
+            }
+
+            type Query {
+                user(id: ID!): User @operation(
+                    operationId: "getUser"
+                    rateLimitTier: STANDARD
+                    timeoutTier: FAST
+                )
+            }
+
+            type User {
+                id: ID!
+            }
+        "#;
+
+        let result = parse_graphql(schema, "test-service");
+        assert!(result.is_ok(), "Parse failed: {:?}", result.err());
+
+        let contract = result.unwrap();
+        // Operation ID should come from directive
+        assert!(contract.operations.contains_key("getUser"));
+
+        let op = &contract.operations["getUser"];
+        assert!(op.themis_metadata.is_some());
+
+        let meta = op.themis_metadata.as_ref().unwrap();
+        assert_eq!(meta.rate_limit_tier, Some("STANDARD".to_string()));
+        assert_eq!(meta.timeout_tier, Some("FAST".to_string()));
+    }
+
+    #[test]
+    fn test_operation_directive_with_security() {
+        let schema = r#"
+            schema @themis(service: "users-service", owner: "platform-team") {
+                query: Query
+            }
+
+            type Query {
+                user(id: ID!): User @operation(
+                    operationId: "getUser"
+                    rateLimitTier: STANDARD
+                    timeoutTier: FAST
+                    security: [SPIFFE, BEARER]
+                )
+            }
+
+            type User {
+                id: ID!
+            }
+        "#;
+
+        let result = parse_graphql(schema, "test-service");
+        assert!(result.is_ok(), "Parse failed: {:?}", result.err());
+
+        let contract = result.unwrap();
+        let op = &contract.operations["getUser"];
+
+        // Should have security requirements
+        assert_eq!(op.security.len(), 2);
+        assert_eq!(op.security[0].scheme, "spiffe");
+        assert_eq!(op.security[1].scheme, "bearer");
+    }
+
+    #[test]
+    fn test_operation_directive_with_idempotent() {
+        let schema = r#"
+            schema @themis(service: "users-service", owner: "platform-team") {
+                query: Query
+                mutation: Mutation
+            }
+
+            type Query {
+                user(id: ID!): User
+            }
+
+            type Mutation {
+                updateUser(id: ID!, name: String!): User @operation(
+                    operationId: "updateUser"
+                    rateLimitTier: STRICT
+                    timeoutTier: STANDARD
+                    idempotent: true
+                )
+            }
+
+            type User {
+                id: ID!
+                name: String!
+            }
+        "#;
+
+        let result = parse_graphql(schema, "test-service");
+        assert!(result.is_ok(), "Parse failed: {:?}", result.err());
+
+        let contract = result.unwrap();
+        assert!(contract.operations.contains_key("updateUser"));
+
+        let op = &contract.operations["updateUser"];
+        assert!(op.themis_metadata.is_some());
+
+        let meta = op.themis_metadata.as_ref().unwrap();
+        assert_eq!(meta.idempotent, Some(true));
+        assert_eq!(meta.rate_limit_tier, Some("STRICT".to_string()));
+    }
+
+    #[test]
+    fn test_operation_without_directive_generates_id() {
+        let schema = r#"
+            type Query {
+                user(id: ID!): User
+            }
+
+            type User {
+                id: ID!
+            }
+        "#;
+
+        let result = parse_graphql(schema, "test-service");
+        assert!(result.is_ok());
+
+        let contract = result.unwrap();
+        // Without @operation directive, ID should be generated from field name
+        assert!(contract.operations.contains_key("query_user"));
+    }
+
+    #[test]
+    fn test_multiple_operations_with_directives() {
+        let schema = r#"
+            schema @themis(service: "users-service", owner: "platform-team") {
+                query: Query
+                mutation: Mutation
+            }
+
+            type Query {
+                user(id: ID!): User @operation(
+                    operationId: "getUser"
+                    rateLimitTier: STANDARD
+                    timeoutTier: FAST
+                    security: [BEARER]
+                )
+                users: [User!]! @operation(
+                    operationId: "listUsers"
+                    rateLimitTier: HIGH
+                    timeoutTier: STANDARD
+                )
+            }
+
+            type Mutation {
+                createUser(name: String!): User @operation(
+                    operationId: "createUser"
+                    rateLimitTier: STRICT
+                    timeoutTier: SLOW
+                    idempotent: false
+                )
+            }
+
+            type User {
+                id: ID!
+                name: String!
+            }
+        "#;
+
+        let result = parse_graphql(schema, "test-service");
+        assert!(result.is_ok(), "Parse failed: {:?}", result.err());
+
+        let contract = result.unwrap();
+
+        // All three operations should exist with correct IDs
+        assert!(contract.operations.contains_key("getUser"));
+        assert!(contract.operations.contains_key("listUsers"));
+        assert!(contract.operations.contains_key("createUser"));
+
+        // Check getUser
+        let get_user = &contract.operations["getUser"];
+        assert_eq!(get_user.security.len(), 1);
+        let meta = get_user.themis_metadata.as_ref().unwrap();
+        assert_eq!(meta.rate_limit_tier, Some("STANDARD".to_string()));
+        assert_eq!(meta.timeout_tier, Some("FAST".to_string()));
+
+        // Check listUsers
+        let list_users = &contract.operations["listUsers"];
+        let meta = list_users.themis_metadata.as_ref().unwrap();
+        assert_eq!(meta.rate_limit_tier, Some("HIGH".to_string()));
+
+        // Check createUser
+        let create_user = &contract.operations["createUser"];
+        let meta = create_user.themis_metadata.as_ref().unwrap();
+        assert_eq!(meta.idempotent, Some(false));
+        assert_eq!(meta.rate_limit_tier, Some("STRICT".to_string()));
+        assert_eq!(meta.timeout_tier, Some("SLOW".to_string()));
     }
 }
