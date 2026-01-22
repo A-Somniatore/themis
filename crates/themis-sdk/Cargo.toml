@@ -1,0 +1,38 @@
+[package]
+name = "themis-sdk"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Rust SDK for Themis contract governance - programmatic access to parsing, validation, and code generation"
+keywords = ["api", "contracts", "openapi", "protobuf", "graphql"]
+categories = ["development-tools", "api-bindings"]
+
+[dependencies]
+# Core Themis crates
+themis-core = { workspace = true }
+themis-openapi = { workspace = true }
+themis-protobuf = { workspace = true }
+themis-graphql = { workspace = true }
+themis-asyncapi = { workspace = true }
+themis-lint = { workspace = true }
+themis-compat = { workspace = true }
+themis-codegen = { workspace = true }
+themis-artifact = { workspace = true }
+themis-registry = { workspace = true }
+
+# Shared platform types
+themis-platform-types = { workspace = true }
+
+# Core dependencies
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+
+[lints]
+workspace = true

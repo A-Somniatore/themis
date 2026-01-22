@@ -1,10 +1,11 @@
 # Themis – Development Roadmap
 
-> **Version**: 2.0.0  
+> **Version**: 2.1.0  
 > **Created**: 2026-01-04  
-> **Last Updated**: 2026-01-09  
+> **Last Updated**: 2026-01-21  
 > **Target Completion**: Week 24 (Full V1 with all contract formats) + Phase T11 (Polish & Completeness)
 > **Current Progress**: Phase T11 COMPLETE ✅ - All MVP phases complete!
+> **📊 UPDATE (2026-01-21)**: Build fixed - 8 errors in `themis-sdk` resolved. New `themis-sdk` crate ready.
 
 ---
 
@@ -1126,14 +1127,53 @@ Themis MUST produce artifacts that:
 
 ---
 
-## Remaining Backlog (P3)
+## Phase T14: SDK & Tooling (Week 30)
 
-> Lower priority items for future consideration.
+> **Purpose**: Provide programmatic access to Themis functionality and infrastructure-as-code support.
+> **Started**: 2026-01-09
+> **Status**: In Progress
 
-| Item               | Location    | Priority | Status     |
-| ------------------ | ----------- | -------- | ---------- |
-| Rust SDK for CLI   | New crate   | P3       | ⏳ Backlog |
-| Terraform provider | Integration | P3       | ⏳ Backlog |
+### Week 30: Rust SDK & Terraform Provider
+
+| Task | Priority | Status |
+|------|----------|--------|
+| Create `themis-sdk` crate | P3 | ⏳ In Progress |
+| Expose parsing, validation, codegen APIs | P3 | ⏳ Not Started |
+| Add SDK documentation with examples | P3 | ⏳ Not Started |
+| Create Terraform provider skeleton | P3 | ⏳ Not Started |
+| Implement basic Terraform resources | P3 | ⏳ Not Started |
+| Write tests for SDK functionality | P3 | ⏳ Not Started |
+
+### Deliverables
+
+1. **Rust SDK** (`crates/themis-sdk/`)
+   - Public API for contract parsing (all formats)
+   - Validation and linting APIs
+   - Code generation APIs
+   - Artifact creation APIs
+   - Comprehensive documentation
+
+2. **Terraform Provider** (`terraform-provider-themis/`)
+   - Provider skeleton with authentication
+   - `themis_contract` data source
+   - `themis_artifact` resource
+   - Basic documentation
+
+### Phase T14 Milestone
+
+**Criteria**: SDK usable programmatically, Terraform provider skeleton functional
+**Target**: Week 30
+
+---
+
+## Remaining Backlog (P3) → Phase T14
+
+> Items now scheduled for Phase T14.
+
+| Item               | Location    | Priority | Status           |
+| ------------------ | ----------- | -------- | ---------------- |
+| Rust SDK for CLI   | New crate   | P3       | ⏳ Phase T14     |
+| Terraform provider | Integration | P3       | ⏳ Phase T14     |
 
 ---
 

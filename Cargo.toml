@@ -12,6 +12,7 @@ members = [
     "crates/themis-cli",
     "crates/themis-artifact",
     "crates/themis-registry",
+    "crates/themis-sdk",
     "crates/themis-integration-tests",
 ]
 
@@ -76,6 +77,7 @@ themis-compat = { path = "crates/themis-compat" }
 themis-codegen = { path = "crates/themis-codegen" }
 themis-artifact = { path = "crates/themis-artifact" }
 themis-registry = { path = "crates/themis-registry" }
+themis-sdk = { path = "crates/themis-sdk" }
 
 # Protobuf parsing
 prost-types = "0.13"

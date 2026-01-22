@@ -2048,6 +2048,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "themis-sdk"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "tempfile",
+ "themis-artifact",
+ "themis-asyncapi",
+ "themis-codegen",
+ "themis-compat",
+ "themis-core",
+ "themis-graphql",
+ "themis-lint",
+ "themis-openapi",
+ "themis-platform-types",
+ "themis-protobuf",
+ "themis-registry",
+ "thiserror 2.0.17",
+]
+
+[[package]]
 name = "thiserror"
 version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
