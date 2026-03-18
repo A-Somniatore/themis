@@ -1,0 +1,14 @@
+maturity: internal
+type: service
+display_name: "Themis"
+description: "Contract-first API governance system — schema validation, compatibility checking, code generation, and artifact publishing for OpenAPI, Protobuf, GraphQL, and AsyncAPI"
+owners:
+  - platform-engineering
+systems:
+  - themis
+tags:
+  - rust
+  - contracts
+  - api-governance
+  - code-generation
+  - schema-validation
