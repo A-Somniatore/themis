@@ -24,8 +24,8 @@ repository = "https://github.com/A-Somniatore/themis"
 rust-version = "1.75"
 
 [workspace.dependencies]
-# Shared platform types
-themis-platform-types = { git = "https://github.com/A-Somniatore/themis-platform-types", branch = "main" }
+# Shared platform types (from private somniatore registry)
+themis-platform-types = { version = "0.2.0", registry = "somniatore" }
 
 # Core dependencies
 serde = { version = "1.0", features = ["derive"] }
